@@ -8,35 +8,35 @@ assignees: []
 
 @claude
 
-## Bug Description
-<!-- Provide a clear and concise summary of the bug -->
+## バグの概要
+<!-- バグの明確で簡潔な要約を記載してください -->
 
 
 
-## Steps to Reproduce
+## 再現手順
 1. 
 2. 
 3. 
 
-## Expected Behavior
-<!-- What should happen -->
+## 期待される動作
+<!-- どのような動作が期待されるか -->
 
 
 
-## Actual Behavior
-<!-- What actually happened -->
+## 実際の動作
+<!-- 実際に発生した動作 -->
 
 
 
-## Environment
-- **Component**: <!-- Frontend, Backend, or Both -->
-- **Browser** (if frontend): <!-- e.g., Chrome, Firefox, Safari -->
-- **OS**: <!-- e.g., Windows, macOS, Linux -->
+## 環境
+- **コンポーネント**: <!-- フロントエンド、バックエンド、または両方 -->
+- **ブラウザ** (フロントエンドの場合): <!-- 例: Chrome, Firefox, Safari -->
+- **OS**: <!-- 例: Windows, macOS, Linux -->
 
-## Screenshots/Logs
-<!-- Add any relevant screenshots, error messages, or log outputs -->
+## スクリーンショット/ログ
+<!-- 関連するスクリーンショット、エラーメッセージ、またはログ出力を追加してください -->
 
 
 
-## Additional Context
-<!-- Any other relevant information -->
+## 追加情報
+<!-- その他の関連情報 -->

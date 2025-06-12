@@ -8,37 +8,37 @@ assignees: []
 
 @claude
 
-## Feature Summary
-<!-- Provide a brief, clear summary of the feature you'd like -->
+## 機能の概要
+<!-- 希望する機能の簡潔で明確な要約を記載してください -->
 
 
 
-## Problem Statement
-<!-- Describe the problem this feature would solve -->
+## 課題の説明
+<!-- この機能が解決する課題を説明してください -->
 
 
 
-## Proposed Solution
-<!-- Describe your preferred solution -->
+## 提案する解決策
+<!-- 好ましい解決策を説明してください -->
 
 
 
-## Implementation Details
-<!-- If you have specific ideas about implementation -->
-- **Component**: <!-- Frontend, Backend, or Both -->
-- **Complexity**: <!-- Simple, Medium, Complex -->
-- **Dependencies**: <!-- Any new libraries or dependencies needed -->
+## 実装の詳細
+<!-- 実装について具体的なアイデアがある場合 -->
+- **コンポーネント**: <!-- フロントエンド、バックエンド、または両方 -->
+- **複雑度**: <!-- シンプル、中程度、複雑 -->
+- **依存関係**: <!-- 必要な新しいライブラリや依存関係 -->
 
-## Acceptance Criteria
-<!-- Define what "done" looks like -->
+## 受け入れ基準
+<!-- 「完了」の定義を記載してください -->
 - [ ] 
 - [ ] 
 - [ ] 
 
-## Additional Context
-<!-- Any other relevant information, mockups, or examples -->
+## 追加情報
+<!-- その他の関連情報、モックアップ、または例 -->
 
 
 
-## Alternative Solutions
-<!-- Describe any alternative approaches you've considered -->
+## 代替案
+<!-- 検討した代替アプローチがあれば説明してください -->
