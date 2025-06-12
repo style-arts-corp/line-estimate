@@ -10,16 +10,19 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:
-      - "5432:5432"
+      - "15432:5432"
     networks:
       - line-estimate-network
 
   backend:
     build:
       context: ./backend
-      dockerfile: Dockerfile
+      # 本番環境ではこちらを使用
+      # dockerfile: Dockerfile
+      # 開発環境ではこちらを使用
+      dockerfile: Dockerfile.local
     ports:
-      - "8080:8080"
+      - "18080:8080"
     environment:
       - PORT=8080
       - DATABASE_URL=postgres://user:password@postgres:5432/line_estimate?sslmode=disable
@@ -30,24 +33,30 @@ services:
       - line-estimate-network
     volumes:
       - ./backend:/app
-    command: ["./main"]
 
   frontend:
     build:
       context: ./frontend
-      dockerfile: Dockerfile
+      # 本番環境ではこちらを使用
+      # dockerfile: Dockerfile
+      # 開発環境ではこちらを使用
+      dockerfile: Dockerfile.local
     ports:
-      - "3000:3000"
+      - "13000:3000"
     environment:
       - NEXT_PUBLIC_API_URL=http://backend:8080/api/v1
     depends_on:
       - backend
     networks:
       - line-estimate-network
+    # 開発環境では volumes を有効化
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
 
 volumes:
   postgres_data:
 
 networks:
   line-estimate-network:
-    driver: bridge 
+    driver: bridge
