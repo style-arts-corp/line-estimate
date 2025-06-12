@@ -8,28 +8,28 @@ assignees: []
 
 @claude
 
-## Task Description
-<!-- Provide a clear and detailed description of what you want Claude to accomplish -->
+## タスクの概要
+<!-- Claude に実行してもらいたいタスクの明確で詳細な説明を記載してください -->
 
 
 
-## Context
-<!-- Provide any relevant background information or context -->
-- **Project area**: <!-- e.g., frontend, backend, documentation, testing -->
-- **Priority**: <!-- High, Medium, Low -->
-- **Files involved**: <!-- List any specific files or directories if known -->
+## コンテキスト
+<!-- 関連する背景情報やコンテキストを提供してください -->
+- **プロジェクト領域**: <!-- 例: フロントエンド、バックエンド、ドキュメント、テスト -->
+- **優先度**: <!-- 高、中、低 -->
+- **関連ファイル**: <!-- 分かっている場合は、特定のファイルやディレクトリを列挙してください -->
 
-## Requirements
-<!-- List specific requirements or acceptance criteria -->
+## 要件
+<!-- 具体的な要件や受け入れ基準をリストアップしてください -->
 - [ ] 
 - [ ] 
 - [ ] 
 
-## Additional Information
-<!-- Any additional context, constraints, or preferences -->
+## 追加情報
+<!-- その他のコンテキスト、制約、または好みがあれば記載してください -->
 
 
 
-## Expected Outcome
-<!-- Describe what success looks like for this task -->
+## 期待される成果
+<!-- このタスクの成功がどのような状態かを説明してください -->
 

@@ -1,61 +1,61 @@
 @claude
 
-## Summary
-<!-- Provide a clear summary of the changes made in this PR -->
+## 概要
+<!-- このPRで行われた変更の明確な要約を記載してください -->
 
 
 
-## Related Issue
-<!-- Link to the related issue if applicable -->
+## 関連Issue
+<!-- 該当する場合は関連するIssueにリンクしてください -->
 Closes #
 
-## Type of Change
-<!-- Check the relevant option -->
-- [ ] Bug fix (non-breaking change which fixes an issue)
-- [ ] New feature (non-breaking change which adds functionality)
-- [ ] Breaking change (fix or feature that would cause existing functionality to not work as expected)
-- [ ] Documentation update
-- [ ] Refactoring (no functional changes)
-- [ ] Performance improvement
-- [ ] Test coverage improvement
+## 変更の種類
+<!-- 該当するオプションをチェックしてください -->
+- [ ] バグ修正（Issueを修正する非破壊的変更）
+- [ ] 新機能（機能を追加する非破壊的変更）
+- [ ] 破壊的変更（既存の機能が期待通りに動作しなくなる修正や機能）
+- [ ] ドキュメント更新
+- [ ] リファクタリング（機能変更なし）
+- [ ] パフォーマンス改善
+- [ ] テストカバレッジ改善
 
-## Changes Made
-<!-- Describe the specific changes in detail -->
-### Frontend Changes
+## 実装した変更
+<!-- 具体的な変更を詳しく説明してください -->
+### フロントエンドの変更
 - 
 
-### Backend Changes
+### バックエンドの変更
 - 
 
-### Configuration/Infrastructure Changes
+### 設定/インフラストラクチャの変更
 - 
 
-## Testing
-<!-- Describe how the changes were tested -->
-- [ ] Unit tests added/updated
-- [ ] Integration tests added/updated
-- [ ] Manual testing performed
-- [ ] No testing required
+## テスト
+<!-- 変更がどのようにテストされたかを説明してください -->
+- [ ] ユニットテストの追加/更新
+- [ ] 統合テストの追加/更新
+- [ ] 手動テストの実行
+- [ ] テスト不要
 
-### Test Results
-<!-- Describe test results or attach screenshots -->
-
-
-
-## Checklist
-<!-- Check off completed items -->
-- [ ] Code follows project style guidelines
-- [ ] Self-review of code completed
-- [ ] Code is properly commented
-- [ ] Corresponding documentation updated
-- [ ] No new warnings introduced
-- [ ] Tests pass locally
-- [ ] Ready for review
-
-## Screenshots/Videos
-<!-- Add any relevant visual documentation -->
+### テスト結果
+<!-- テスト結果を説明するか、スクリーンショットを添付してください -->
 
 
 
-## Additional Notes
-<!-- Any additional information for reviewers -->
+## チェックリスト
+<!-- 完了した項目をチェックしてください -->
+- [ ] コードがプロジェクトのスタイルガイドラインに従っている
+- [ ] コードのセルフレビューを完了
+- [ ] コードが適切にコメント化されている
+- [ ] 対応するドキュメントを更新済み
+- [ ] 新しい警告が発生していない
+- [ ] テストがローカルで通る
+- [ ] レビュー準備完了
+
+## スクリーンショット/動画
+<!-- 関連する視覚的ドキュメントを追加してください -->
+
+
+
+## 追加メモ
+<!-- レビュアーへの追加情報 -->
