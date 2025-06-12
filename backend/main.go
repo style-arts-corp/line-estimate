@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"os"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
@@ -14,7 +15,15 @@ import (
 func main() {
 	// 環境変数の読み込み
 	if err := godotenv.Load(); err != nil {
-		log.Println("No .env file found")
+		// ファイルが存在しない場合とパースエラーを区別
+		if strings.Contains(err.Error(), "no such file or directory") {
+			log.Println(".envファイルが見つかりません（オプション）")
+		} else if strings.Contains(err.Error(), "keys cannot contain new lines") {
+			log.Printf("エラー: .envファイルの解析に失敗しました - %v", err)
+			log.Println("環境変数のキーまたは値に改行文字が含まれている可能性があります")
+		} else {
+			log.Printf(".envファイルの読み込みエラー: %v", err)
+		}
 	}
 
 	// Ginエンジンの初期化
