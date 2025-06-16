@@ -30,6 +30,10 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - uses: pnpm/action-setup@v3
+        with:
+          version: ${{ env.pnpm-version }}
+
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ env.node-version }}
@@ -56,6 +60,10 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v3
+        with:
+          version: ${{ env.pnpm-version }}
 
       - uses: actions/setup-node@v4
         with:
