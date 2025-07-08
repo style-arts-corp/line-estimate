@@ -23,12 +23,12 @@ module "service_accounts" {
   source = "./projects/disposal-estimate/IAMServiceAccount"
 }
 
-# APIサービスの有効化（コメントアウト - 後で個別にインポート）
-# module "apis" {
-#   source = "./458490939918/Service"
-# }
+# APIサービスの有効化
+module "apis" {
+  source = "./458490939918/Service"
+}
 
-# ロギング設定（コメントアウト - エラーの原因）
+# ロギング設定（システムデフォルトのため管理対象外）
 # module "logging" {
 #   source = "./458490939918/458490939918/Project/LoggingLogSink"
 # }

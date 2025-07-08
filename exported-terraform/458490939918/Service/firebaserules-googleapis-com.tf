@@ -1,5 +1,5 @@
 resource "google_project_service" "firebaserules_googleapis_com" {
-  project = "458490939918"
+  project = "disposal-estimate"
   service = "firebaserules.googleapis.com"
 }
-# terraform import google_project_service.firebaserules_googleapis_com 458490939918/firebaserules.googleapis.com
+# terraform import google_project_service.firebaserules_googleapis_com disposal-estimate/firebaserules.googleapis.com
