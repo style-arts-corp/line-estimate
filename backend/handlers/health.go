@@ -9,6 +9,6 @@ import (
 func HealthCheck(c *gin.Context) {
 	utils.SuccessResponse(c, gin.H{
 		"status":  "ok",
-		"message": "API is running",
+		"message": "API is running. API は正常に動作しています。",
 	})
 }
