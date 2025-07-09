@@ -23,19 +23,19 @@ RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o main .
 FROM alpine:latest
 
 # Install ca-certificates for HTTPS requests
-RUN apk --no-cache add ca-certificates
+RUN apk update && apk add --no-cache ca-certificates
 
 # Create non-root user
 RUN addgroup -g 1001 -S appgroup && \
     adduser -u 1001 -S appuser -G appgroup
 
-WORKDIR /root/
+WORKDIR /app
 
 # Copy the binary from builder stage
 COPY --from=builder /app/main .
 
-# Change ownership to non-root user
-RUN chown appuser:appgroup main
+# Change ownership and permissions to non-root user
+RUN chown appuser:appgroup main && chmod +x main
 
 # Switch to non-root user
 USER appuser

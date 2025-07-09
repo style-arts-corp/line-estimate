@@ -1,0 +1,155 @@
+name: Deploy API to Cloud Run
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+    paths:
+      - 'backend/**'
+  pull_request:
+    branches:
+      - main
+      - develop
+    paths:
+      - 'backend/**'
+
+env:
+  PROJECT_ID: disposal-estimate
+  REGION: asia-northeast1
+  ARTIFACT_REGISTRY: asia-northeast1-docker.pkg.dev/disposal-estimate/disposal-estimate-api
+
+jobs:
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.24'
+
+      - name: Cache Go modules
+        uses: actions/cache@v3
+        with:
+          path: ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+
+      - name: Install dependencies
+        working-directory: ./backend
+        run: go mod download
+
+      - name: Run tests
+        working-directory: ./backend
+        run: go test -v ./...
+
+      - name: Run security scan
+        working-directory: ./backend
+        run: |
+          go install golang.org/x/vuln/cmd/govulncheck@latest
+          govulncheck ./...
+
+  build-and-deploy:
+    name: Build and Deploy
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v1
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v1
+
+      - name: Configure Docker for Artifact Registry
+        run: |
+          gcloud auth configure-docker ${{ env.REGION }}-docker.pkg.dev
+
+      - name: Determine environment and service name
+        id: env
+        run: |
+          if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+            echo "ENV=prod" >> $GITHUB_OUTPUT
+            echo "SERVICE_NAME=disposal-estimate-api" >> $GITHUB_OUTPUT
+            echo "GIN_MODE=release" >> $GITHUB_OUTPUT
+          elif [[ "${{ github.ref }}" == "refs/heads/develop" ]]; then
+            echo "ENV=dev" >> $GITHUB_OUTPUT
+            echo "SERVICE_NAME=disposal-estimate-api-dev" >> $GITHUB_OUTPUT
+            echo "GIN_MODE=debug" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Build Docker image
+        working-directory: ./backend
+        run: |
+          IMAGE_TAG=${{ env.ARTIFACT_REGISTRY }}/${{ steps.env.outputs.SERVICE_NAME }}:${{ github.sha }}
+          docker build -t $IMAGE_TAG .
+          echo "IMAGE_TAG=$IMAGE_TAG" >> $GITHUB_ENV
+
+      - name: Push Docker image
+        run: |
+          docker push ${{ env.IMAGE_TAG }}
+
+      - name: Deploy to Cloud Run
+        run: |
+          gcloud run deploy ${{ steps.env.outputs.SERVICE_NAME }} \
+            --image ${{ env.IMAGE_TAG }} \
+            --region ${{ env.REGION }} \
+            --platform managed \
+            --allow-unauthenticated \
+            --memory 512Mi \
+            --cpu 1 \
+            --min-instances 0 \
+            --max-instances 10 \
+            --port 8080 \
+            --set-env-vars="GIN_MODE=${{ steps.env.outputs.GIN_MODE }}" \
+            --set-secrets="JWT_SECRET=jwt-secret:latest" \
+            --timeout 300
+
+      - name: Get service URL
+        id: url
+        run: |
+          URL=$(gcloud run services describe ${{ steps.env.outputs.SERVICE_NAME }} \
+            --region ${{ env.REGION }} \
+            --format 'value(status.url)')
+          echo "SERVICE_URL=$URL" >> $GITHUB_OUTPUT
+
+      - name: Health check
+        run: |
+          sleep 30  # サービス起動待ち
+          curl -f ${{ steps.url.outputs.SERVICE_URL }}/health || exit 1
+
+      - name: Output deployment info
+        run: |
+          echo "🚀 Deployment successful!"
+          echo "Service: ${{ steps.env.outputs.SERVICE_NAME }}"
+          echo "URL: ${{ steps.url.outputs.SERVICE_URL }}"
+          echo "Environment: ${{ steps.env.outputs.ENV }}"
+
+  notify:
+    name: Notify deployment result
+    needs: build-and-deploy
+    runs-on: ubuntu-latest
+    if: always() && github.event_name == 'push'
+    
+    steps:
+      - name: Notify success
+        if: needs.build-and-deploy.result == 'success'
+        run: |
+          echo "✅ Deployment successful to ${{ needs.build-and-deploy.outputs.SERVICE_URL }}"
+
+      - name: Notify failure
+        if: needs.build-and-deploy.result == 'failure'
+        run: |
+          echo "❌ Deployment failed"
+          exit 1

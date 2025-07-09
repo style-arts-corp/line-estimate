@@ -24,7 +24,7 @@ resource "google_secret_manager_secret_iam_member" "cloud_run_accessor" {
   project   = var.project_id
   secret_id = google_secret_manager_secret.jwt_secret.secret_id
   role      = "roles/secretmanager.secretAccessor"
-  member    = "serviceAccount:${var.project_id}-compute@developer.gserviceaccount.com"
+  member    = "serviceAccount:458490939918-compute@developer.gserviceaccount.com"
 }
 
 # IAM binding for GitHub Actions service account to manage secrets
