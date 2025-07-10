@@ -52,7 +52,7 @@ jobs:
     name: Build and Deploy
     needs: test
     runs-on: ubuntu-latest
-    if: github.event_name == 'push'
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
     
     steps:
       - name: Checkout code
@@ -134,7 +134,7 @@ jobs:
     name: Notify deployment result
     needs: build-and-deploy
     runs-on: ubuntu-latest
-    if: always() && github.event_name == 'push'
+    if: always() && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
     
     steps:
       - name: Notify success
