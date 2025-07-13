@@ -108,6 +108,7 @@ jobs:
             --port 8080 \
             --set-env-vars="GIN_MODE=${{ steps.env.outputs.GIN_MODE }}" \
             --set-secrets="JWT_SECRET=jwt-secret:latest" \
+            --service-account github-action-999236392@disposal-estimate.iam.gserviceaccount.com \
             --timeout 300
 
       - name: Get service URL
