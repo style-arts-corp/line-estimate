@@ -3,10 +3,10 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useForm } from '@tanstack/react-form'
+import Image from 'next/image'
 import { FileText, Save, ArrowLeft, Check, ClipboardList, ExternalLink } from 'lucide-react'
 import { instructionsSchema, type InstructionsForm } from '@/lib/validation'
 import { useAppContext } from '@/contexts/AppContext'
-import type { SelectedItem, CustomerInfo } from '@/lib/types'
 
 export default function InstructionsPage() {
   const router = useRouter()
@@ -31,7 +31,7 @@ export default function InstructionsPage() {
   })
 
   useEffect(() => {
-    // Context から状態を取得（LocalStorage との同期は AppContext で処理）
+    // instructionsSaved 状態を Context から取得
     setInstructionsSaved(state.instructionsSaved)
   }, [state.instructionsSaved])
 
@@ -147,9 +147,11 @@ export default function InstructionsPage() {
                     <div key={item.id} className="flex items-start">
                       {item.imageUrl && (
                         <div className="h-16 w-16 mr-3 rounded overflow-hidden border border-gray-200 flex-shrink-0">
-                          <img
+                          <Image
                             src={item.imageUrl || '/placeholder.svg'}
                             alt={`${item.name}の写真`}
+                            width={64}
+                            height={64}
                             className="h-full w-full object-cover"
                           />
                         </div>

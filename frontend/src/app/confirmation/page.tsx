@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { FileText, FileOutput, ExternalLink } from 'lucide-react'
 import { useAppContext } from '@/contexts/AppContext'
-import type { SelectedItem, CustomerInfo } from '@/lib/types'
 
 export default function ConfirmationPage() {
   const router = useRouter()
@@ -15,8 +14,9 @@ export default function ConfirmationPage() {
   const QUOTE_URL = 'https://drive.google.com/file/d/1PjaDRt3vvEs4wBPKz0JMaTzcmMLrKPOl/view?usp=drive_link'
 
   useEffect(() => {
-    // Context から状態を取得（LocalStorage との同期は AppContext で処理）
-  }, [])
+    // quoteGenerated 状態を Context から取得
+    setQuoteGenerated(state.quoteGenerated)
+  }, [state.quoteGenerated])
 
   const handleGenerateQuote = () => {
     setQuoteGenerated(true)
