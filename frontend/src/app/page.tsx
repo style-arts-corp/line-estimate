@@ -8,6 +8,7 @@ import { QuoteSummary } from '@/components/quote-summary'
 import { CustomItemForm } from '@/components/custom-item-form'
 import { useRouter } from 'next/navigation'
 import { MOCK_CATEGORIES } from '@/lib/mock-data'
+import { customerInfoSchema } from '@/lib/validation'
 import type { Item, SelectedItem, CustomerInfo } from '@/lib/types'
 
 export default function Home() {
@@ -92,16 +93,16 @@ export default function Home() {
       missingFields.push('廃棄品')
     }
 
-    if (!customerInfo.name) {
-      missingFields.push('顧客名')
-    }
-
-    if (!customerInfo.address) {
-      missingFields.push('住所')
-    }
-
-    if (!customerInfo.phone) {
-      missingFields.push('電話番号')
+    // Zodスキーマを使用してバリデーション
+    const validationResult = customerInfoSchema.safeParse(customerInfo)
+    
+    if (!validationResult.success) {
+      const errors = validationResult.error.issues
+      errors.forEach((error) => {
+        if (error.path[0] === 'name') missingFields.push('顧客名')
+        if (error.path[0] === 'address') missingFields.push('住所')
+        if (error.path[0] === 'phone') missingFields.push('電話番号')
+      })
     }
 
     if (missingFields.length > 0) {
