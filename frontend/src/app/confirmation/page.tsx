@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import Image from 'next/image'
 import { FileText, FileOutput, ExternalLink } from 'lucide-react'
 import type { SelectedItem, CustomerInfo } from '@/lib/types'
 
@@ -18,8 +19,6 @@ export default function ConfirmationPage() {
   const [totalAmount, setTotalAmount] = useState(0)
   const [quoteGenerated, setQuoteGenerated] = useState(false)
 
-  const INSTRUCTIONS_URL =
-    'https://docs.google.com/sheets/d/1GwyUeSqpHi7qYJTYmyB2SswIkfp388pMyq9bgfKG9Jw/edit?usp=drive_link'
   const QUOTE_URL = 'https://drive.google.com/file/d/1PjaDRt3vvEs4wBPKz0JMaTzcmMLrKPOl/view?usp=drive_link'
 
   useEffect(() => {
@@ -93,9 +92,11 @@ export default function ConfirmationPage() {
                     <div key={item.id} className="flex items-start">
                       {item.imageUrl && (
                         <div className="h-16 w-16 mr-3 rounded overflow-hidden border border-gray-200 flex-shrink-0">
-                          <img
+                          <Image
                             src={item.imageUrl || '/placeholder.svg'}
                             alt={`${item.name}の写真`}
+                            width={64}
+                            height={64}
                             className="h-full w-full object-cover"
                           />
                         </div>

@@ -2,7 +2,9 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { useForm } from '@tanstack/react-form'
 import { FileText, Save, ArrowLeft, Check, ClipboardList, ExternalLink } from 'lucide-react'
+import { instructionsSchema, type InstructionsForm } from '@/lib/validation'
 import type { SelectedItem, CustomerInfo } from '@/lib/types'
 
 export default function InstructionsPage() {
@@ -16,13 +18,23 @@ export default function InstructionsPage() {
     disposalDate: '',
   })
   const [totalAmount, setTotalAmount] = useState(0)
-  const [collectionDate, setCollectionDate] = useState('')
-  const [notes, setNotes] = useState('')
   const [instructionsSaved, setInstructionsSaved] = useState(false)
 
   const INSTRUCTIONS_URL =
     'https://docs.google.com/spreadsheets/d/1GwyUeSqpHi7qYJTYmyB2SswIkfp388pMyq9bgfKG9Jw/edit?usp=drive_link'
   const QUOTE_URL = 'https://drive.google.com/file/d/1PjaDRt3vvEs4wBPKz0JMaTzcmMLrKPOl/view?usp=drive_link'
+
+  const form = useForm({
+    defaultValues: {
+      collectionDate: '',
+      notes: '',
+    } as InstructionsForm,
+    onSubmit: async ({ value }) => {
+      localStorage.setItem('collectionDate', value.collectionDate)
+      localStorage.setItem('notes', value.notes || '')
+      setInstructionsSaved(true)
+    },
+  })
 
   useEffect(() => {
     const storedItems = localStorage.getItem('selectedItems')
@@ -41,9 +53,7 @@ export default function InstructionsPage() {
   }, [])
 
   const handleSaveInstructions = () => {
-    localStorage.setItem('collectionDate', collectionDate)
-    localStorage.setItem('notes', notes)
-    setInstructionsSaved(true)
+    form.handleSubmit()
   }
 
   const handleNavigateToQuote = () => {
@@ -91,35 +101,58 @@ export default function InstructionsPage() {
               <hr className="border-gray-200" />
 
               <div className="space-y-4">
-                <div className="space-y-2">
-                  <label htmlFor="collection-date" className="block text-sm font-medium text-gray-700">
-                    収集日
-                  </label>
-                  <input
-                    type="text"
-                    id="collection-date"
-                    value={collectionDate}
-                    onChange={(e) => setCollectionDate(e.target.value)}
-                    placeholder="例: 2023年5月1日 午前10時"
-                    disabled={instructionsSaved}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 disabled:bg-gray-100 disabled:cursor-not-allowed"
-                  />
-                </div>
+                <form.Field
+                  name="collectionDate"
+                  validators={{
+                    onChange: ({ value }) => {
+                      const result = instructionsSchema.shape.collectionDate.safeParse(value)
+                      return result.success ? undefined : result.error.issues[0]?.message
+                    },
+                  }}
+                >
+                  {(field) => (
+                    <div className="space-y-2">
+                      <label htmlFor={field.name} className="block text-sm font-medium text-gray-700">
+                        収集日 <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        id={field.name}
+                        value={field.state.value}
+                        onChange={(e) => field.handleChange(e.target.value)}
+                        onBlur={field.handleBlur}
+                        placeholder="例: 2023年5月1日 午前10時"
+                        disabled={instructionsSaved}
+                        className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 disabled:bg-gray-100 disabled:cursor-not-allowed ${
+                          field.state.meta.errors.length > 0 ? 'border-red-500' : 'border-gray-300'
+                        }`}
+                      />
+                      {field.state.meta.errors.length > 0 && (
+                        <p className="mt-1 text-sm text-red-500">{field.state.meta.errors[0]}</p>
+                      )}
+                    </div>
+                  )}
+                </form.Field>
 
-                <div className="space-y-2">
-                  <label htmlFor="notes" className="block text-sm font-medium text-gray-700">
-                    備考
-                  </label>
-                  <textarea
-                    id="notes"
-                    value={notes}
-                    onChange={(e) => setNotes(e.target.value)}
-                    placeholder="特記事項や注意点などを入力してください"
-                    rows={4}
-                    disabled={instructionsSaved}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 disabled:bg-gray-100 disabled:cursor-not-allowed resize-vertical"
-                  />
-                </div>
+                <form.Field name="notes">
+                  {(field) => (
+                    <div className="space-y-2">
+                      <label htmlFor={field.name} className="block text-sm font-medium text-gray-700">
+                        備考
+                      </label>
+                      <textarea
+                        id={field.name}
+                        value={field.state.value}
+                        onChange={(e) => field.handleChange(e.target.value)}
+                        onBlur={field.handleBlur}
+                        placeholder="特記事項や注意点などを入力してください"
+                        rows={4}
+                        disabled={instructionsSaved}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 disabled:bg-gray-100 disabled:cursor-not-allowed resize-vertical"
+                      />
+                    </div>
+                  )}
+                </form.Field>
               </div>
 
               <hr className="border-gray-200" />
@@ -189,13 +222,20 @@ export default function InstructionsPage() {
               </button>
             </>
           ) : (
-            <button
-              onClick={handleSaveInstructions}
-              className="w-full px-6 py-3 bg-blue-600 text-white font-medium rounded-md hover:bg-blue-700 transition-colors flex items-center justify-center"
+            <form.Subscribe
+              selector={(state) => [state.canSubmit, state.isSubmitting]}
             >
-              <Save className="mr-2 h-5 w-5" />
-              指示書を保存
-            </button>
+              {([canSubmit, isSubmitting]) => (
+                <button
+                  onClick={handleSaveInstructions}
+                  disabled={!canSubmit}
+                  className="w-full px-6 py-3 bg-blue-600 text-white font-medium rounded-md hover:bg-blue-700 transition-colors flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <Save className="mr-2 h-5 w-5" />
+                  {isSubmitting ? '保存中...' : '指示書を保存'}
+                </button>
+              )}
+            </form.Subscribe>
           )}
 
           <button
