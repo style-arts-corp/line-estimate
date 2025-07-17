@@ -20,7 +20,13 @@ export function CustomerForm({ customerInfo, setCustomerInfo }: CustomerFormProp
       disposalDate: customerInfo.disposalDate,
     } as CustomerInfoForm,
     onSubmit: async ({ value }) => {
-      setCustomerInfo(value)
+      setCustomerInfo({
+        name: value.name,
+        address: value.address,
+        phone: value.phone,
+        email: value.email || '',
+        disposalDate: value.disposalDate || '',
+      })
     },
   })
 

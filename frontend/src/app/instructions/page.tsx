@@ -31,7 +31,7 @@ export default function InstructionsPage() {
     } as InstructionsForm,
     onSubmit: async ({ value }) => {
       localStorage.setItem('collectionDate', value.collectionDate)
-      localStorage.setItem('notes', value.notes)
+      localStorage.setItem('notes', value.notes || '')
       setInstructionsSaved(true)
     },
   })
