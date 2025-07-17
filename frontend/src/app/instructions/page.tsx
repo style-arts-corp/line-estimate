@@ -5,19 +5,12 @@ import { useRouter } from 'next/navigation'
 import { useForm } from '@tanstack/react-form'
 import { FileText, Save, ArrowLeft, Check, ClipboardList, ExternalLink } from 'lucide-react'
 import { instructionsSchema, type InstructionsForm } from '@/lib/validation'
+import { useAppContext } from '@/contexts/AppContext'
 import type { SelectedItem, CustomerInfo } from '@/lib/types'
 
 export default function InstructionsPage() {
   const router = useRouter()
-  const [selectedItems, setSelectedItems] = useState<SelectedItem[]>([])
-  const [customerInfo, setCustomerInfo] = useState<CustomerInfo>({
-    name: '',
-    address: '',
-    phone: '',
-    email: '',
-    disposalDate: '',
-  })
-  const [totalAmount, setTotalAmount] = useState(0)
+  const { state, dispatch } = useAppContext()
   const [instructionsSaved, setInstructionsSaved] = useState(false)
 
   const INSTRUCTIONS_URL =
@@ -26,31 +19,21 @@ export default function InstructionsPage() {
 
   const form = useForm({
     defaultValues: {
-      collectionDate: '',
-      notes: '',
+      collectionDate: state.collectionDate,
+      notes: state.notes,
     } as InstructionsForm,
     onSubmit: async ({ value }) => {
-      localStorage.setItem('collectionDate', value.collectionDate)
-      localStorage.setItem('notes', value.notes || '')
+      dispatch({ type: 'SET_COLLECTION_DATE', payload: value.collectionDate })
+      dispatch({ type: 'SET_NOTES', payload: value.notes || '' })
+      dispatch({ type: 'SET_INSTRUCTIONS_SAVED', payload: true })
       setInstructionsSaved(true)
     },
   })
 
   useEffect(() => {
-    const storedItems = localStorage.getItem('selectedItems')
-    const storedCustomerInfo = localStorage.getItem('customerInfo')
-    const storedTotal = localStorage.getItem('totalAmount')
-
-    if (storedItems) {
-      setSelectedItems(JSON.parse(storedItems))
-    }
-    if (storedCustomerInfo) {
-      setCustomerInfo(JSON.parse(storedCustomerInfo))
-    }
-    if (storedTotal) {
-      setTotalAmount(Number(storedTotal))
-    }
-  }, [])
+    // Context から状態を取得（LocalStorage との同期は AppContext で処理）
+    setInstructionsSaved(state.instructionsSaved)
+  }, [state.instructionsSaved])
 
   const handleSaveInstructions = () => {
     form.handleSubmit()
@@ -77,22 +60,22 @@ export default function InstructionsPage() {
                 <h2 className="text-lg font-semibold text-gray-900 mb-2">顧客情報</h2>
                 <div className="space-y-1 text-sm">
                   <p className="text-gray-700">
-                    <span className="font-medium">名前:</span> {customerInfo.name}
+                    <span className="font-medium">名前:</span> {state.customerInfo.name}
                   </p>
                   <p className="text-gray-700">
-                    <span className="font-medium">住所:</span> {customerInfo.address}
+                    <span className="font-medium">住所:</span> {state.customerInfo.address}
                   </p>
                   <p className="text-gray-700">
-                    <span className="font-medium">電話番号:</span> {customerInfo.phone}
+                    <span className="font-medium">電話番号:</span> {state.customerInfo.phone}
                   </p>
-                  {customerInfo.email && (
+                  {state.customerInfo.email && (
                     <p className="text-gray-700">
-                      <span className="font-medium">メール:</span> {customerInfo.email}
+                      <span className="font-medium">メール:</span> {state.customerInfo.email}
                     </p>
                   )}
-                  {customerInfo.disposalDate && (
+                  {state.customerInfo.disposalDate && (
                     <p className="text-gray-700">
-                      <span className="font-medium">廃棄予定日:</span> {customerInfo.disposalDate}
+                      <span className="font-medium">廃棄予定日:</span> {state.customerInfo.disposalDate}
                     </p>
                   )}
                 </div>
@@ -160,7 +143,7 @@ export default function InstructionsPage() {
               <div>
                 <h2 className="text-lg font-semibold text-gray-900 mb-2">廃棄品リスト</h2>
                 <div className="space-y-4">
-                  {selectedItems.map((item) => (
+                  {state.selectedItems.map((item) => (
                     <div key={item.id} className="flex items-start">
                       {item.imageUrl && (
                         <div className="h-16 w-16 mr-3 rounded overflow-hidden border border-gray-200 flex-shrink-0">
@@ -187,7 +170,7 @@ export default function InstructionsPage() {
 
               <div className="flex justify-between text-lg font-bold text-gray-900">
                 <span>合計金額(税込)</span>
-                <span>¥{totalAmount.toLocaleString()}</span>
+                <span>¥{state.totalAmount.toLocaleString()}</span>
               </div>
             </div>
           </div>

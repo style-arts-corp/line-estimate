@@ -9,11 +9,12 @@ import { CustomItemForm } from '@/components/custom-item-form'
 import { useRouter } from 'next/navigation'
 import { MOCK_CATEGORIES } from '@/lib/mock-data'
 import { customerInfoSchema } from '@/lib/validation'
-import type { Item, SelectedItem, CustomerInfo } from '@/lib/types'
+import { useAppContext } from '@/contexts/AppContext'
+import type { Item, CustomerInfo } from '@/lib/types'
 
 export default function Home() {
   const router = useRouter()
-  const [selectedItems, setSelectedItems] = useState<SelectedItem[]>([])
+  const { state, dispatch } = useAppContext()
   const [customerInfo, setCustomerInfo] = useState<CustomerInfo>({
     name: '',
     address: '',
@@ -26,16 +27,8 @@ export default function Home() {
   const [toast, setToast] = useState<{ show: boolean; message: string } | null>(null)
 
   useEffect(() => {
-    const storedItems = localStorage.getItem('selectedItems')
-    const storedCustomerInfo = localStorage.getItem('customerInfo')
-
-    if (storedItems) {
-      setSelectedItems(JSON.parse(storedItems))
-    }
-    if (storedCustomerInfo) {
-      setCustomerInfo(JSON.parse(storedCustomerInfo))
-    }
-  }, [])
+    setCustomerInfo(state.customerInfo)
+  }, [state.customerInfo])
 
   const showToast = (message: string) => {
     setToast({ show: true, message })
@@ -43,45 +36,66 @@ export default function Home() {
   }
 
   const addItem = (item: Item) => {
-    const existingItem = selectedItems.find((i) => i.id === item.id)
+    const existingItem = state.selectedItems.find((i) => i.id === item.id)
 
     if (existingItem) {
-      setSelectedItems(selectedItems.map((i) => (i.id === item.id ? { ...i, quantity: i.quantity + 1 } : i)))
+      dispatch({
+        type: 'UPDATE_SELECTED_ITEM',
+        payload: { id: item.id, updates: { quantity: existingItem.quantity + 1 } }
+      })
     } else {
-      setSelectedItems([...selectedItems, { ...item, quantity: 1, customPrice: item.price }])
+      dispatch({
+        type: 'ADD_SELECTED_ITEM',
+        payload: { ...item, quantity: 1, customPrice: item.price }
+      })
     }
   }
 
   const updateItemQuantity = (id: string, quantity: number) => {
     if (quantity <= 0) {
-      setSelectedItems(selectedItems.filter((item) => item.id !== id))
+      dispatch({ type: 'REMOVE_SELECTED_ITEM', payload: id })
     } else {
-      setSelectedItems(selectedItems.map((item) => (item.id === id ? { ...item, quantity } : item)))
+      dispatch({
+        type: 'UPDATE_SELECTED_ITEM',
+        payload: { id, updates: { quantity } }
+      })
     }
   }
 
   const updateItemPrice = (id: string, customPrice: number) => {
-    setSelectedItems(selectedItems.map((item) => (item.id === id ? { ...item, customPrice } : item)))
+    dispatch({
+      type: 'UPDATE_SELECTED_ITEM',
+      payload: { id, updates: { customPrice } }
+    })
   }
 
   const updateItemName = (id: string, name: string) => {
-    setSelectedItems(selectedItems.map((item) => (item.id === id ? { ...item, name } : item)))
+    dispatch({
+      type: 'UPDATE_SELECTED_ITEM',
+      payload: { id, updates: { name } }
+    })
   }
 
   const removeItem = (id: string) => {
-    setSelectedItems(selectedItems.filter((item) => item.id !== id))
+    dispatch({ type: 'REMOVE_SELECTED_ITEM', payload: id })
   }
 
   const addItemImage = (id: string, imageUrl: string) => {
-    setSelectedItems(selectedItems.map((item) => (item.id === id ? { ...item, imageUrl } : item)))
+    dispatch({
+      type: 'UPDATE_SELECTED_ITEM',
+      payload: { id, updates: { imageUrl } }
+    })
   }
 
   const removeItemImage = (id: string) => {
-    setSelectedItems(selectedItems.map((item) => (item.id === id ? { ...item, imageUrl: undefined } : item)))
+    dispatch({
+      type: 'UPDATE_SELECTED_ITEM',
+      payload: { id, updates: { imageUrl: undefined } }
+    })
   }
 
   const calculateTotal = () => {
-    return selectedItems.reduce((total, item) => total + item.customPrice * item.quantity, 0)
+    return state.selectedItems.reduce((total, item) => total + item.customPrice * item.quantity, 0)
   }
 
   const handleGenerateQuote = () => {
@@ -89,7 +103,7 @@ export default function Home() {
 
     const missingFields = []
 
-    if (selectedItems.length === 0) {
+    if (state.selectedItems.length === 0) {
       missingFields.push('廃棄品')
     }
 
@@ -115,10 +129,9 @@ export default function Home() {
       return
     }
 
+    dispatch({ type: 'SET_CUSTOMER_INFO', payload: customerInfo })
+    dispatch({ type: 'SET_TOTAL_AMOUNT', payload: calculateTotal() })
     router.push('/confirmation')
-    localStorage.setItem('selectedItems', JSON.stringify(selectedItems))
-    localStorage.setItem('customerInfo', JSON.stringify(customerInfo))
-    localStorage.setItem('totalAmount', calculateTotal().toString())
   }
 
   return (
@@ -149,11 +162,11 @@ export default function Home() {
           <CustomItemForm onAddCustomItem={addItem} />
         </div>
 
-        {selectedItems.length > 0 && (
+        {state.selectedItems.length > 0 && (
           <div className="bg-white rounded-lg shadow p-4">
             <h2 className="text-lg font-semibold text-gray-900 mb-4">選択済みアイテム</h2>
             <SelectedItemsList
-              items={selectedItems}
+              items={state.selectedItems}
               onQuantityChange={updateItemQuantity}
               onPriceChange={updateItemPrice}
               onNameChange={updateItemName}
@@ -164,7 +177,7 @@ export default function Home() {
           </div>
         )}
 
-        {formSubmitted && selectedItems.length === 0 && (
+        {formSubmitted && state.selectedItems.length === 0 && (
           <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-600">
             廃棄品を1つ以上選択してください
           </div>
@@ -173,7 +186,7 @@ export default function Home() {
 
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 shadow-lg">
         <div className="container mx-auto flex justify-between items-center">
-          <QuoteSummary total={calculateTotal()} itemCount={selectedItems.length} />
+          <QuoteSummary total={calculateTotal()} itemCount={state.selectedItems.length} />
           <button
             onClick={handleGenerateQuote}
             className="px-6 py-3 bg-blue-600 text-white font-medium rounded-md hover:bg-blue-700 transition-colors"
