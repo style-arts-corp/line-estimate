@@ -17,27 +17,48 @@ func CreatePDF(c *gin.Context) {
 	pdf.Start(gopdf.Config{PageSize: *gopdf.PageSizeA4})
 	pdf.AddPage()
 
-	// Try to add a font (optional, fallback to basic drawing)
+	// Try to add a font
 	fontAdded := false
-	err := pdf.AddTTFFont("noto-sans", "./fonts/NotoSans-Regular.ttf")
-	if err == nil {
-		pdf.SetFont("noto-sans", "", 16)
-		fontAdded = true
-	} else {
-		// Try alternative font
-		err = pdf.AddTTFFont("arial", "./fonts/arial.ttf")
-		if err == nil {
-			pdf.SetFont("arial", "", 16)
-			fontAdded = true
+
+	// Get current working directory for debugging
+	cwd, _ := os.Getwd()
+
+	// Try multiple font paths
+	fontPaths := []string{
+		"./fonts/NotoSansJP-Regular.ttf",
+		"fonts/NotoSansJP-Regular.ttf",
+		filepath.Join(cwd, "fonts", "NotoSansJP-Regular.ttf"),
+		"/app/fonts/NotoSansJP-Regular.ttf", // Docker path
+	}
+
+	var fontErr error
+	for _, path := range fontPaths {
+		if _, err := os.Stat(path); err == nil {
+			// Font file exists, try to add it
+			fontErr = pdf.AddTTFFont("noto-sans", path)
+			if fontErr == nil {
+				fontErr = pdf.SetFont("noto-sans", "", 16)
+				if fontErr == nil {
+					fontAdded = true
+					break
+				}
+			}
 		}
+	}
+
+	// Log font loading status
+	if !fontAdded {
+		fmt.Printf("Font loading failed. CWD: %s, Error: %v\n", cwd, fontErr)
 	}
 
 	// Add "Test" text to the PDF
 	if fontAdded {
-		pdf.Cell(nil, "Test")
+		pdf.SetX(100)
+		pdf.SetY(100)
+		pdf.Cell(nil, "こんにちは")
 	} else {
-		// Fallback: Use basic text drawing without custom fonts
-		pdf.Text(100, 100, "Test")
+		// Return early with a blank PDF, but still create it
+		fmt.Printf("No font could be loaded, creating blank PDF\n")
 	}
 
 	// Create pdfs directory if it doesn't exist
@@ -53,8 +74,7 @@ func CreatePDF(c *gin.Context) {
 	filepath := filepath.Join(pdfDir, filename)
 
 	// Save the PDF
-	err = pdf.WritePdf(filepath)
-	if err != nil {
+	if err := pdf.WritePdf(filepath); err != nil {
 		utils.ErrorResponse(c, 500, "PDFの保存に失敗しました: "+err.Error())
 		return
 	}
