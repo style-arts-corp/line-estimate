@@ -8,6 +8,14 @@ export interface AppState {
   notes: string
   quoteGenerated: boolean
   instructionsSaved: boolean
+  workSlip: boolean
+  weighing: boolean
+  manifest: boolean
+  recycleTicket: boolean
+  collectionAmountTaxIncluded: number
+  collectionAmountTaxExcluded: number
+  tPointAvailable: boolean
+  tPointUsage: number
 }
 
 export type AppAction =
@@ -22,6 +30,14 @@ export type AppAction =
   | { type: 'SET_NOTES'; payload: string }
   | { type: 'SET_QUOTE_GENERATED'; payload: boolean }
   | { type: 'SET_INSTRUCTIONS_SAVED'; payload: boolean }
+  | { type: 'SET_WORK_SLIP'; payload: boolean }
+  | { type: 'SET_WEIGHING'; payload: boolean }
+  | { type: 'SET_MANIFEST'; payload: boolean }
+  | { type: 'SET_RECYCLE_TICKET'; payload: boolean }
+  | { type: 'SET_COLLECTION_AMOUNT_TAX_INCLUDED'; payload: number }
+  | { type: 'SET_COLLECTION_AMOUNT_TAX_EXCLUDED'; payload: number }
+  | { type: 'SET_T_POINT_AVAILABLE'; payload: boolean }
+  | { type: 'SET_T_POINT_USAGE'; payload: number }
   | { type: 'RESET_STATE' }
 
 export interface AppContextType {

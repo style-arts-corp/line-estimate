@@ -11,6 +11,14 @@ export const customerInfoSchema = z.object({
 export const instructionsSchema = z.object({
   collectionDate: z.string().min(1, '収集日は必須です'),
   notes: z.string().optional(),
+  workSlip: z.boolean(),
+  weighing: z.boolean(),
+  manifest: z.boolean(),
+  recycleTicket: z.boolean(),
+  collectionAmountTaxIncluded: z.number().min(0, '集金額（税込）は0以上である必要があります'),
+  collectionAmountTaxExcluded: z.number().min(0, '集金額（税抜）は0以上である必要があります'),
+  tPointAvailable: z.boolean(),
+  tPointUsage: z.number().min(0, 'Tポイント使用数は0以上である必要があります'),
 })
 
 export const customItemSchema = z.object({

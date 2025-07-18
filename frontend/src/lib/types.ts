@@ -25,6 +25,19 @@ export interface CustomerInfo {
   disposalDate: string
 }
 
+export interface InstructionsInfo {
+  collectionDate: string
+  notes: string
+  workSlip: boolean // 作業伝票
+  weighing: boolean // 計量
+  manifest: boolean // マニフェスト
+  recycleTicket: boolean // リサイクル券
+  collectionAmountTaxIncluded: number // 集金額（税込）
+  collectionAmountTaxExcluded: number // 集金額（税抜）
+  tPointAvailable: boolean // Tポイント
+  tPointUsage: number // 使用するポイント数
+}
+
 export interface ConsignmentApplication {
   id: string
   customerInfo: CustomerInfo

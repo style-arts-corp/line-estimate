@@ -14,6 +14,14 @@ export const initialState: AppState = {
   notes: '',
   quoteGenerated: false,
   instructionsSaved: false,
+  workSlip: false,
+  weighing: false,
+  manifest: false,
+  recycleTicket: false,
+  collectionAmountTaxIncluded: 0,
+  collectionAmountTaxExcluded: 0,
+  tPointAvailable: false,
+  tPointUsage: 0,
 }
 
 export function appReducer(state: AppState, action: AppAction): AppState {
@@ -89,6 +97,54 @@ export function appReducer(state: AppState, action: AppAction): AppState {
       return {
         ...state,
         instructionsSaved: action.payload,
+      }
+    
+    case 'SET_WORK_SLIP':
+      return {
+        ...state,
+        workSlip: action.payload,
+      }
+    
+    case 'SET_WEIGHING':
+      return {
+        ...state,
+        weighing: action.payload,
+      }
+    
+    case 'SET_MANIFEST':
+      return {
+        ...state,
+        manifest: action.payload,
+      }
+    
+    case 'SET_RECYCLE_TICKET':
+      return {
+        ...state,
+        recycleTicket: action.payload,
+      }
+    
+    case 'SET_COLLECTION_AMOUNT_TAX_INCLUDED':
+      return {
+        ...state,
+        collectionAmountTaxIncluded: action.payload,
+      }
+    
+    case 'SET_COLLECTION_AMOUNT_TAX_EXCLUDED':
+      return {
+        ...state,
+        collectionAmountTaxExcluded: action.payload,
+      }
+    
+    case 'SET_T_POINT_AVAILABLE':
+      return {
+        ...state,
+        tPointAvailable: action.payload,
+      }
+    
+    case 'SET_T_POINT_USAGE':
+      return {
+        ...state,
+        tPointUsage: action.payload,
       }
     
     case 'RESET_STATE':

@@ -21,10 +21,26 @@ export default function InstructionsPage() {
     defaultValues: {
       collectionDate: state.collectionDate,
       notes: state.notes,
+      workSlip: state.workSlip,
+      weighing: state.weighing,
+      manifest: state.manifest,
+      recycleTicket: state.recycleTicket,
+      collectionAmountTaxIncluded: state.collectionAmountTaxIncluded,
+      collectionAmountTaxExcluded: state.collectionAmountTaxExcluded,
+      tPointAvailable: state.tPointAvailable,
+      tPointUsage: state.tPointUsage,
     } as InstructionsForm,
     onSubmit: async ({ value }) => {
       dispatch({ type: 'SET_COLLECTION_DATE', payload: value.collectionDate })
       dispatch({ type: 'SET_NOTES', payload: value.notes || '' })
+      dispatch({ type: 'SET_WORK_SLIP', payload: value.workSlip })
+      dispatch({ type: 'SET_WEIGHING', payload: value.weighing })
+      dispatch({ type: 'SET_MANIFEST', payload: value.manifest })
+      dispatch({ type: 'SET_RECYCLE_TICKET', payload: value.recycleTicket })
+      dispatch({ type: 'SET_COLLECTION_AMOUNT_TAX_INCLUDED', payload: value.collectionAmountTaxIncluded })
+      dispatch({ type: 'SET_COLLECTION_AMOUNT_TAX_EXCLUDED', payload: value.collectionAmountTaxExcluded })
+      dispatch({ type: 'SET_T_POINT_AVAILABLE', payload: value.tPointAvailable })
+      dispatch({ type: 'SET_T_POINT_USAGE', payload: value.tPointUsage })
       dispatch({ type: 'SET_INSTRUCTIONS_SAVED', payload: true })
       setInstructionsSaved(true)
     },
@@ -136,6 +152,233 @@ export default function InstructionsPage() {
                     </div>
                   )}
                 </form.Field>
+              </div>
+
+              <hr className="border-gray-200" />
+
+              <div className="space-y-6">
+                <div>
+                  <h2 className="text-lg font-semibold text-gray-900 mb-4">作業詳細</h2>
+                  <div className="grid grid-cols-2 gap-4">
+                    <form.Field name="workSlip">
+                      {(field) => (
+                        <div className="flex items-center space-x-2">
+                          <input
+                            type="checkbox"
+                            id={field.name}
+                            checked={field.state.value}
+                            onChange={(e) => field.handleChange(e.target.checked)}
+                            onBlur={field.handleBlur}
+                            disabled={instructionsSaved}
+                            className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded disabled:opacity-50"
+                          />
+                          <label htmlFor={field.name} className="text-sm font-medium text-gray-700">
+                            作業伝票
+                          </label>
+                        </div>
+                      )}
+                    </form.Field>
+
+                    <form.Field name="weighing">
+                      {(field) => (
+                        <div className="flex items-center space-x-2">
+                          <input
+                            type="checkbox"
+                            id={field.name}
+                            checked={field.state.value}
+                            onChange={(e) => field.handleChange(e.target.checked)}
+                            onBlur={field.handleBlur}
+                            disabled={instructionsSaved}
+                            className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded disabled:opacity-50"
+                          />
+                          <label htmlFor={field.name} className="text-sm font-medium text-gray-700">
+                            計量
+                          </label>
+                        </div>
+                      )}
+                    </form.Field>
+
+                    <form.Field name="manifest">
+                      {(field) => (
+                        <div className="flex items-center space-x-2">
+                          <input
+                            type="checkbox"
+                            id={field.name}
+                            checked={field.state.value}
+                            onChange={(e) => field.handleChange(e.target.checked)}
+                            onBlur={field.handleBlur}
+                            disabled={instructionsSaved}
+                            className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded disabled:opacity-50"
+                          />
+                          <label htmlFor={field.name} className="text-sm font-medium text-gray-700">
+                            マニフェスト
+                          </label>
+                        </div>
+                      )}
+                    </form.Field>
+
+                    <form.Field name="recycleTicket">
+                      {(field) => (
+                        <div className="flex items-center space-x-2">
+                          <input
+                            type="checkbox"
+                            id={field.name}
+                            checked={field.state.value}
+                            onChange={(e) => field.handleChange(e.target.checked)}
+                            onBlur={field.handleBlur}
+                            disabled={instructionsSaved}
+                            className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded disabled:opacity-50"
+                          />
+                          <label htmlFor={field.name} className="text-sm font-medium text-gray-700">
+                            リサイクル券
+                          </label>
+                        </div>
+                      )}
+                    </form.Field>
+                  </div>
+                </div>
+
+                <div>
+                  <h2 className="text-lg font-semibold text-gray-900 mb-4">集金情報</h2>
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <form.Field
+                        name="collectionAmountTaxIncluded"
+                        validators={{
+                          onChange: ({ value }) => {
+                            const result = instructionsSchema.shape.collectionAmountTaxIncluded.safeParse(value)
+                            return result.success ? undefined : result.error.issues[0]?.message
+                          },
+                        }}
+                      >
+                        {(field) => (
+                          <div className="space-y-2">
+                            <label htmlFor={field.name} className="block text-sm font-medium text-gray-700">
+                              集金額（税込）
+                            </label>
+                            <div className="relative">
+                              <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-700">¥</span>
+                              <input
+                                type="number"
+                                id={field.name}
+                                value={field.state.value}
+                                onChange={(e) => field.handleChange(Number(e.target.value))}
+                                onBlur={field.handleBlur}
+                                placeholder="0"
+                                min="0"
+                                disabled={instructionsSaved}
+                                className={`w-full pl-8 pr-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 disabled:bg-gray-100 disabled:cursor-not-allowed ${
+                                  field.state.meta.errors.length > 0 ? 'border-red-500' : 'border-gray-300'
+                                }`}
+                              />
+                              {field.state.meta.errors.length > 0 && (
+                                <p className="mt-1 text-sm text-red-500">{field.state.meta.errors[0]}</p>
+                              )}
+                            </div>
+                          </div>
+                        )}
+                      </form.Field>
+
+                      <form.Field
+                        name="collectionAmountTaxExcluded"
+                        validators={{
+                          onChange: ({ value }) => {
+                            const result = instructionsSchema.shape.collectionAmountTaxExcluded.safeParse(value)
+                            return result.success ? undefined : result.error.issues[0]?.message
+                          },
+                        }}
+                      >
+                        {(field) => (
+                          <div className="space-y-2">
+                            <label htmlFor={field.name} className="block text-sm font-medium text-gray-700">
+                              集金額（税抜）
+                            </label>
+                            <div className="relative">
+                              <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-700">¥</span>
+                              <input
+                                type="number"
+                                id={field.name}
+                                value={field.state.value}
+                                onChange={(e) => field.handleChange(Number(e.target.value))}
+                                onBlur={field.handleBlur}
+                                placeholder="0"
+                                min="0"
+                                disabled={instructionsSaved}
+                                className={`w-full pl-8 pr-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 disabled:bg-gray-100 disabled:cursor-not-allowed ${
+                                  field.state.meta.errors.length > 0 ? 'border-red-500' : 'border-gray-300'
+                                }`}
+                              />
+                              {field.state.meta.errors.length > 0 && (
+                                <p className="mt-1 text-sm text-red-500">{field.state.meta.errors[0]}</p>
+                              )}
+                            </div>
+                          </div>
+                        )}
+                      </form.Field>
+                    </div>
+
+                    <div>
+                      <h3 className="text-md font-semibold text-gray-900 mb-2">Tポイント</h3>
+                      <div className="space-y-3">
+                        <form.Field name="tPointAvailable">
+                          {(field) => (
+                            <div className="flex items-center space-x-2">
+                              <input
+                                type="checkbox"
+                                id={field.name}
+                                checked={field.state.value}
+                                onChange={(e) => field.handleChange(e.target.checked)}
+                                onBlur={field.handleBlur}
+                                disabled={instructionsSaved}
+                                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded disabled:opacity-50"
+                              />
+                              <label htmlFor={field.name} className="text-sm font-medium text-gray-700">
+                                Tポイントを使用する
+                              </label>
+                            </div>
+                          )}
+                        </form.Field>
+
+                        <form.Field
+                          name="tPointUsage"
+                          validators={{
+                            onChange: ({ value }) => {
+                              const result = instructionsSchema.shape.tPointUsage.safeParse(value)
+                              return result.success ? undefined : result.error.issues[0]?.message
+                            },
+                          }}
+                        >
+                          {(field) => (
+                            <div className="space-y-2">
+                              <label htmlFor={field.name} className="block text-sm font-medium text-gray-700">
+                                使用するポイント数
+                              </label>
+                              <div className="relative">
+                                <input
+                                  type="number"
+                                  id={field.name}
+                                  value={field.state.value}
+                                  onChange={(e) => field.handleChange(Number(e.target.value))}
+                                  onBlur={field.handleBlur}
+                                  placeholder="0"
+                                  min="0"
+                                  disabled={instructionsSaved}
+                                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 disabled:bg-gray-100 disabled:cursor-not-allowed ${
+                                    field.state.meta.errors.length > 0 ? 'border-red-500' : 'border-gray-300'
+                                  }`}
+                                />
+                                <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-700">ポイント</span>
+                                {field.state.meta.errors.length > 0 && (
+                                  <p className="mt-1 text-sm text-red-500">{field.state.meta.errors[0]}</p>
+                                )}
+                              </div>
+                            </div>
+                          )}
+                        </form.Field>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
 
               <hr className="border-gray-200" />
