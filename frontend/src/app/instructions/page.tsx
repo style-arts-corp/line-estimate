@@ -251,32 +251,42 @@ export default function InstructionsPage() {
                           },
                         }}
                       >
-                        {(field) => (
-                          <div className="space-y-2">
-                            <label htmlFor={field.name} className="block text-sm font-medium text-gray-700">
-                              集金額（税込）
-                            </label>
-                            <div className="relative">
-                              <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-700">¥</span>
-                              <input
-                                type="number"
-                                id={field.name}
-                                value={field.state.value}
-                                onChange={(e) => field.handleChange(Number(e.target.value))}
-                                onBlur={field.handleBlur}
-                                placeholder="0"
-                                min="0"
-                                disabled={instructionsSaved}
-                                className={`w-full pl-8 pr-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 disabled:bg-gray-100 disabled:cursor-not-allowed ${
-                                  field.state.meta.errors.length > 0 ? 'border-red-500' : 'border-gray-300'
-                                }`}
-                              />
-                              {field.state.meta.errors.length > 0 && (
-                                <p className="mt-1 text-sm text-red-500">{field.state.meta.errors[0]}</p>
-                              )}
+                        {(field) => {
+                          // 税込額が変更されたときに税抜額を自動更新
+                          const handleTaxIncludedChange = (value: number) => {
+                            field.handleChange(value)
+                            // 税率 10% で税抜額を計算
+                            const taxExcludedAmount = Math.floor(value / 1.1)
+                            form.setFieldValue('collectionAmountTaxExcluded', taxExcludedAmount)
+                          }
+
+                          return (
+                            <div className="space-y-2">
+                              <label htmlFor={field.name} className="block text-sm font-medium text-gray-700">
+                                集金額（税込）
+                              </label>
+                              <div className="relative">
+                                <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-700">¥</span>
+                                <input
+                                  type="number"
+                                  id={field.name}
+                                  value={field.state.value}
+                                  onChange={(e) => handleTaxIncludedChange(Number(e.target.value) || 0)}
+                                  onBlur={field.handleBlur}
+                                  placeholder="0"
+                                  min="0"
+                                  disabled={instructionsSaved}
+                                  className={`w-full pl-8 pr-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 disabled:bg-gray-100 disabled:cursor-not-allowed ${
+                                    field.state.meta.errors.length > 0 ? 'border-red-500' : 'border-gray-300'
+                                  }`}
+                                />
+                                {field.state.meta.errors.length > 0 && (
+                                  <p className="mt-1 text-sm text-red-500">{field.state.meta.errors[0]}</p>
+                                )}
+                              </div>
                             </div>
-                          </div>
-                        )}
+                          )
+                        }}
                       </form.Field>
 
                       <form.Field
@@ -292,6 +302,7 @@ export default function InstructionsPage() {
                           <div className="space-y-2">
                             <label htmlFor={field.name} className="block text-sm font-medium text-gray-700">
                               集金額（税抜）
+                              <span className="text-xs text-gray-500 ml-1">（税込額から自動計算）</span>
                             </label>
                             <div className="relative">
                               <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-700">¥</span>
@@ -304,7 +315,8 @@ export default function InstructionsPage() {
                                 placeholder="0"
                                 min="0"
                                 disabled={instructionsSaved}
-                                className={`w-full pl-8 pr-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 disabled:bg-gray-100 disabled:cursor-not-allowed ${
+                                readOnly
+                                className={`w-full pl-8 pr-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 bg-gray-50 cursor-not-allowed ${
                                   field.state.meta.errors.length > 0 ? 'border-red-500' : 'border-gray-300'
                                 }`}
                               />
