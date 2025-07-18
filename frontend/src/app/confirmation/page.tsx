@@ -4,41 +4,23 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { FileText, FileOutput, ExternalLink } from 'lucide-react'
-import type { SelectedItem, CustomerInfo } from '@/lib/types'
+import { useAppContext } from '@/contexts/AppContext'
 
 export default function ConfirmationPage() {
   const router = useRouter()
-  const [selectedItems, setSelectedItems] = useState<SelectedItem[]>([])
-  const [customerInfo, setCustomerInfo] = useState<CustomerInfo>({
-    name: '',
-    address: '',
-    phone: '',
-    email: '',
-    disposalDate: '',
-  })
-  const [totalAmount, setTotalAmount] = useState(0)
+  const { state, dispatch } = useAppContext()
   const [quoteGenerated, setQuoteGenerated] = useState(false)
 
   const QUOTE_URL = 'https://drive.google.com/file/d/1PjaDRt3vvEs4wBPKz0JMaTzcmMLrKPOl/view?usp=drive_link'
 
   useEffect(() => {
-    const storedItems = localStorage.getItem('selectedItems')
-    const storedCustomerInfo = localStorage.getItem('customerInfo')
-    const storedTotal = localStorage.getItem('totalAmount')
-
-    if (storedItems) {
-      setSelectedItems(JSON.parse(storedItems))
-    }
-    if (storedCustomerInfo) {
-      setCustomerInfo(JSON.parse(storedCustomerInfo))
-    }
-    if (storedTotal) {
-      setTotalAmount(Number(storedTotal))
-    }
-  }, [])
+    // quoteGenerated 状態を Context から取得
+    setQuoteGenerated(state.quoteGenerated)
+  }, [state.quoteGenerated])
 
   const handleGenerateQuote = () => {
     setQuoteGenerated(true)
+    dispatch({ type: 'SET_QUOTE_GENERATED', payload: true })
   }
 
   const handleNavigateToQuote = () => {
@@ -62,22 +44,22 @@ export default function ConfirmationPage() {
                 <h2 className="text-lg font-semibold text-gray-900 mb-2">顧客情報</h2>
                 <div className="space-y-1 text-sm">
                   <p className="text-gray-700">
-                    <span className="font-medium">名前:</span> {customerInfo.name}
+                    <span className="font-medium">名前:</span> {state.customerInfo.name}
                   </p>
                   <p className="text-gray-700">
-                    <span className="font-medium">住所:</span> {customerInfo.address}
+                    <span className="font-medium">住所:</span> {state.customerInfo.address}
                   </p>
                   <p className="text-gray-700">
-                    <span className="font-medium">電話番号:</span> {customerInfo.phone}
+                    <span className="font-medium">電話番号:</span> {state.customerInfo.phone}
                   </p>
-                  {customerInfo.email && (
+                  {state.customerInfo.email && (
                     <p className="text-gray-700">
-                      <span className="font-medium">メール:</span> {customerInfo.email}
+                      <span className="font-medium">メール:</span> {state.customerInfo.email}
                     </p>
                   )}
-                  {customerInfo.disposalDate && (
+                  {state.customerInfo.disposalDate && (
                     <p className="text-gray-700">
-                      <span className="font-medium">廃棄予定日:</span> {customerInfo.disposalDate}
+                      <span className="font-medium">廃棄予定日:</span> {state.customerInfo.disposalDate}
                     </p>
                   )}
                 </div>
@@ -88,7 +70,7 @@ export default function ConfirmationPage() {
               <div>
                 <h2 className="text-lg font-semibold text-gray-900 mb-2">廃棄品リスト</h2>
                 <div className="space-y-4">
-                  {selectedItems.map((item) => (
+                  {state.selectedItems.map((item) => (
                     <div key={item.id} className="flex items-start">
                       {item.imageUrl && (
                         <div className="h-16 w-16 mr-3 rounded overflow-hidden border border-gray-200 flex-shrink-0">
@@ -117,7 +99,7 @@ export default function ConfirmationPage() {
 
               <div className="flex justify-between text-lg font-bold text-gray-900">
                 <span>合計金額(税込)</span>
-                <span>¥{totalAmount.toLocaleString()}</span>
+                <span>¥{state.totalAmount.toLocaleString()}</span>
               </div>
             </div>
           </div>
