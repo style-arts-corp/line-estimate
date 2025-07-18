@@ -63,6 +63,7 @@ func main() {
 				estimates.GET("/:id", handlers.GetEstimate)
 				estimates.PUT("/:id", handlers.UpdateEstimate)
 				estimates.DELETE("/:id", handlers.DeleteEstimate)
+				estimates.POST("/pdf", handlers.CreateEstimatePDF) // 一時的にコメントアウト
 			}
 
 			// ユーザー関連
