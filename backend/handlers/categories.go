@@ -6,7 +6,6 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
-	"line-estimate-backend/models"
 	"line-estimate-backend/utils"
 )
 

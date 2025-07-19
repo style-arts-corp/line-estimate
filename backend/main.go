@@ -39,6 +39,7 @@ func main() {
 	dev := r.Group("/dev")
 	{
 		dev.GET("/create-pdf", handlers.CreatePDF)
+		dev.GET("/create-instruction-pdf", handlers.CreateTestInstructionPDF)
 	}
 
 	// API v1 ルートグループ
@@ -67,6 +68,12 @@ func main() {
 				estimates.PUT("/:id", handlers.UpdateEstimate)
 				estimates.DELETE("/:id", handlers.DeleteEstimate)
 				estimates.POST("/pdf", handlers.CreateEstimatePDF) // 一時的にコメントアウト
+			}
+
+			// 指示書関連
+			instructions := protected.Group("/instructions")
+			{
+				instructions.POST("/pdf", handlers.CreateInstructionPDF)
 			}
 
 			// ユーザー関連

@@ -1,9 +1,5 @@
 package models
 
-import (
-	"time"
-)
-
 type User struct {
 	Name      string     `json:"name" gorm:"not null"`
 	Address   string     `json:"address"`

@@ -117,11 +117,10 @@ func DeleteEstimate(c *gin.Context) {
 }
 
 func GetProfile(c *gin.Context) {
-	userID := c.GetFloat64("userID")
+	// userID := c.GetFloat64("userID")
 
 	// TODO: データベースからユーザー情報取得
 	user := models.User{
-		ID:    uint(userID),
 		Email: "test@example.com",
 		Name:  "Test User",
 	}
@@ -130,7 +129,7 @@ func GetProfile(c *gin.Context) {
 }
 
 func UpdateProfile(c *gin.Context) {
-	userID := c.GetFloat64("userID")
+	// userID := c.GetFloat64("userID")
 
 	var req struct {
 		Name string `json:"name" binding:"required"`
@@ -144,7 +143,6 @@ func UpdateProfile(c *gin.Context) {
 	// TODO: データベースでユーザー情報更新
 	utils.SuccessResponse(c, gin.H{
 		"message": "Profile updated successfully",
-		"userID":  userID,
 		"name":    req.Name,
 	})
 }
