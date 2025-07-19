@@ -8,18 +8,12 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/signintech/gopdf"
+	"line-estimate-backend/models"
 	"line-estimate-backend/utils"
 )
 
-func CreatePDF(c *gin.Context) {
-	// Create a new PDF document
-	pdf := gopdf.GoPdf{}
-	pdf.Start(gopdf.Config{PageSize: *gopdf.PageSizeA4})
-	pdf.AddPage()
-
-	// Try to add a font
-	fontAdded := false
-
+// loadJapaneseFont loads Japanese font for PDF
+func loadJapaneseFont(pdf *gopdf.GoPdf) error {
 	// Get current working directory for debugging
 	cwd, _ := os.Getwd()
 
@@ -37,28 +31,96 @@ func CreatePDF(c *gin.Context) {
 			// Font file exists, try to add it
 			fontErr = pdf.AddTTFFont("noto-sans", path)
 			if fontErr == nil {
-				fontErr = pdf.SetFont("noto-sans", "", 16)
-				if fontErr == nil {
-					fontAdded = true
-					break
-				}
+				return nil
 			}
 		}
 	}
 
-	// Log font loading status
-	if !fontAdded {
-		fmt.Printf("Font loading failed. CWD: %s, Error: %v\n", cwd, fontErr)
+	if fontErr != nil {
+		return fmt.Errorf("font loading failed: %v", fontErr)
+	}
+	return fmt.Errorf("no font file found")
+}
+
+// GenerateEstimatePDF generates an estimate PDF from the provided data
+func GenerateEstimatePDF(estimate *models.PDFEstimate) (*gopdf.GoPdf, error) {
+	// Create a new PDF document
+	pdf := &gopdf.GoPdf{}
+	pdf.Start(gopdf.Config{PageSize: *gopdf.PageSizeA4})
+
+	// Load Japanese font
+	if err := loadJapaneseFont(pdf); err != nil {
+		return nil, err
 	}
 
-	// Add "Test" text to the PDF
-	if fontAdded {
-		pdf.SetX(100)
-		pdf.SetY(100)
-		pdf.Cell(nil, "こんにちは")
-	} else {
-		// Return early with a blank PDF, but still create it
-		fmt.Printf("No font could be loaded, creating blank PDF\n")
+	// First page
+	pdf.AddPage()
+
+	// Create helper
+	helper := utils.NewPDFHelper(pdf)
+
+	// Draw header
+	if err := helper.DrawHeader(estimate); err != nil {
+		return nil, err
+	}
+
+	// Draw customer info
+	if err := helper.DrawCustomerInfo(estimate); err != nil {
+		return nil, err
+	}
+
+	// Draw title
+	if err := helper.DrawTitle(estimate.Title); err != nil {
+		return nil, err
+	}
+
+	// Draw items table
+	tableEndY, err := helper.DrawTable(estimate.Items, 320)
+	if err != nil {
+		return nil, err
+	}
+
+	// Draw totals
+	if err := helper.DrawTotals(estimate, tableEndY+20); err != nil {
+		return nil, err
+	}
+
+	// Draw remarks
+	if len(estimate.Remarks) > 0 {
+		if err := helper.DrawRemarks(estimate.Remarks, tableEndY+120); err != nil {
+			return nil, err
+		}
+	}
+
+	// Second page (for company seal)
+	pdf.AddPage()
+	pdf.SetX(450)
+	pdf.SetY(100)
+	if err := pdf.SetFont("noto-sans", "", 10); err != nil {
+		return nil, err
+	}
+	pdf.Cell(nil, "社印")
+
+	// Draw box for seal
+	pdf.SetLineWidth(0.5)
+	pdf.Rectangle(430, 120, 100, 100, "D", 0, 0)
+
+	return pdf, nil
+}
+
+// CreateEstimatePDF handles the HTTP request to create an estimate PDF
+func CreateEstimatePDF(c *gin.Context) {
+	var estimate models.PDFEstimate
+	if err := c.ShouldBindJSON(&estimate); err != nil {
+		utils.ErrorResponse(c, 400, "無効なリクエストデータ: "+err.Error())
+		return
+	}
+
+	// Generate PDF
+	pdf, err := GenerateEstimatePDF(&estimate)
+	if err != nil {
+		utils.ErrorResponse(c, 500, "PDF生成に失敗しました: "+err.Error())
+		return
 	}
 
 	// Create pdfs directory if it doesn't exist
@@ -70,7 +132,7 @@ func CreatePDF(c *gin.Context) {
 
 	// Generate unique filename with timestamp
 	timestamp := time.Now().Format("20060102_150405")
-	filename := fmt.Sprintf("test_%s.pdf", timestamp)
+	filename := fmt.Sprintf("estimate_%s_%s.pdf", estimate.EstimateNo, timestamp)
 	filepath := filepath.Join(pdfDir, filename)
 
 	// Save the PDF
@@ -81,7 +143,86 @@ func CreatePDF(c *gin.Context) {
 
 	// Return success response
 	utils.SuccessResponse(c, gin.H{
-		"message":  "PDFが正常に作成されました",
+		"message":  "見積書PDFが正常に作成されました",
+		"filename": filename,
+		"filepath": filepath,
+	})
+}
+
+// CreatePDF creates a test PDF (legacy function)
+func CreatePDF(c *gin.Context) {
+	// Create test estimate data
+	testEstimate := &models.PDFEstimate{
+		EstimateNo: "EST-20250425-001",
+		IssueDate:  time.Now(),
+		Customer: models.PDFCustomerInfo{
+			CompanyName: "株式会社丸井",
+			PostalCode:  "123-4567",
+			Address:     "東京都新宿区○○1-2-3",
+			Tel:         "03-1234-5678",
+			Fax:         "03-8765-4321",
+		},
+		Recipient: "佐藤 様",
+		Title:     "廃棄物処理に関する見積書",
+		Items: []models.PDFLineItem{
+			{
+				Description: "オフィスチェア",
+				Quantity:    10,
+				UnitPrice:   1500,
+				Amount:      15000,
+			},
+			{
+				Description: "会議用テーブル",
+				Quantity:    3,
+				UnitPrice:   4000,
+				Amount:      12000,
+			},
+			{
+				Description: "収集運搬費",
+				Quantity:    1,
+				UnitPrice:   20000,
+				Amount:      20000,
+			},
+		},
+		SubTotal: 47000,
+		TaxRate:  0.10,
+		Tax:      4700,
+		Total:    51700,
+		Remarks: []string{
+			"※お見積もりの有効期限は発行日より1ヶ月となります。",
+			"※実際の廃棄物量により金額が変更となる場合がございます。",
+			"※お支払い条件：作業完了後、請求書発行日より30日以内",
+		},
+	}
+
+	// Generate PDF
+	pdf, err := GenerateEstimatePDF(testEstimate)
+	if err != nil {
+		utils.ErrorResponse(c, 500, "PDF生成に失敗しました: "+err.Error())
+		return
+	}
+
+	// Create pdfs directory if it doesn't exist
+	pdfDir := "./pdfs"
+	if err := os.MkdirAll(pdfDir, 0755); err != nil {
+		utils.ErrorResponse(c, 500, "PDFディレクトリの作成に失敗しました")
+		return
+	}
+
+	// Generate unique filename with timestamp
+	timestamp := time.Now().Format("20060102_150405")
+	filename := fmt.Sprintf("test_estimate_%s.pdf", timestamp)
+	filepath := filepath.Join(pdfDir, filename)
+
+	// Save the PDF
+	if err := pdf.WritePdf(filepath); err != nil {
+		utils.ErrorResponse(c, 500, "PDFの保存に失敗しました: "+err.Error())
+		return
+	}
+
+	// Return success response
+	utils.SuccessResponse(c, gin.H{
+		"message":  "テスト見積書PDFが正常に作成されました",
 		"filename": filename,
 		"filepath": filepath,
 	})
