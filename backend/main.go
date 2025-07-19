@@ -35,6 +35,12 @@ func main() {
 	// ヘルスチェック
 	r.GET("/health", handlers.HealthCheck)
 
+	// 開発用エンドポイント
+	dev := r.Group("/dev")
+	{
+		dev.GET("/create-pdf", handlers.CreatePDF)
+	}
+
 	// API v1 ルートグループ
 	v1 := r.Group("/api/v1")
 	{
