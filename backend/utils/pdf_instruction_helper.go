@@ -23,7 +23,7 @@ func (h *PDFInstructionHelper) DrawInstructionHeader(instruction *models.PDFInst
 	if err := h.pdf.SetFont("noto-sans", "", 16); err != nil {
 		return err
 	}
-	
+
 	title := "作業指示書"
 	if isReceipt {
 		title = "控"
@@ -53,7 +53,7 @@ func (h *PDFInstructionHelper) DrawContactInfo(instruction *models.PDFInstructio
 	}
 
 	startY := float64(100)
-	
+
 	// Draw box
 	h.pdf.SetLineWidth(0.5)
 	h.pdf.Rectangle(50, startY, 200, 120, "D", 0, 0)
@@ -103,14 +103,14 @@ func (h *PDFInstructionHelper) DrawContactInfo(instruction *models.PDFInstructio
 	h.pdf.Cell(nil, info.Tel)
 
 	// Draw vertical lines
-	h.pdf.Line(85, startY + 20, 85, startY + 90)
-	h.pdf.Line(145, startY + 60, 145, startY + 90)
+	h.pdf.Line(85, startY+20, 85, startY+90)
+	h.pdf.Line(145, startY+60, 145, startY+90)
 
 	// Draw horizontal lines
-	h.pdf.Line(50, startY + 20, 250, startY + 20)
-	h.pdf.Line(50, startY + 40, 250, startY + 40)
-	h.pdf.Line(50, startY + 60, 250, startY + 60)
-	h.pdf.Line(50, startY + 90, 250, startY + 90)
+	h.pdf.Line(50, startY+20, 250, startY+20)
+	h.pdf.Line(50, startY+40, 250, startY+40)
+	h.pdf.Line(50, startY+60, 250, startY+60)
+	h.pdf.Line(50, startY+90, 250, startY+90)
 
 	return nil
 }
@@ -150,7 +150,7 @@ func (h *PDFInstructionHelper) DrawWorkItems(items []models.PDFWorkItem) error {
 	}
 
 	startY := float64(240)
-	
+
 	// Section title
 	h.pdf.SetX(50)
 	h.pdf.SetY(startY)
@@ -158,7 +158,7 @@ func (h *PDFInstructionHelper) DrawWorkItems(items []models.PDFWorkItem) error {
 
 	// Draw box for items
 	h.pdf.SetLineWidth(0.5)
-	h.pdf.Rectangle(50, startY + 20, 495, 250, "D", 0, 0)
+	h.pdf.Rectangle(50, startY+20, 495, 250, "D", 0, 0)
 
 	// Draw grid lines (horizontal)
 	for i := 1; i < 10; i++ {
@@ -188,7 +188,7 @@ func (h *PDFInstructionHelper) DrawWorkDetails(details models.PDFWorkDetails) er
 	}
 
 	startY := float64(520)
-	
+
 	// Work slip
 	h.pdf.SetX(50)
 	h.pdf.SetY(startY)
@@ -233,7 +233,7 @@ func (h *PDFInstructionHelper) DrawWorkDetails(details models.PDFWorkDetails) er
 	h.pdf.SetX(50)
 	h.pdf.SetY(startY + 60)
 	h.pdf.Cell(nil, "リサイクル券")
-	
+
 	if details.NoRecyclingFee {
 		h.pdf.SetX(120)
 		h.pdf.Cell(nil, "無")

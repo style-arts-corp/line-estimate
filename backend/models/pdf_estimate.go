@@ -4,20 +4,20 @@ import "time"
 
 // PDFEstimate represents the estimate/quotation data structure for PDF generation
 type PDFEstimate struct {
-	EstimateNo   string           `json:"estimate_no"`
-	IssueDate    time.Time        `json:"issue_date"`
-	Customer     PDFCustomerInfo  `json:"customer"`
-	Recipient    string           `json:"recipient"` // 佐藤 様
-	Title        string           `json:"title"`
-	Items        []PDFLineItem    `json:"items"`
-	SubTotal     float64          `json:"sub_total"`
-	TaxRate      float64          `json:"tax_rate"`
-	Tax          float64          `json:"tax"`
-	Total        float64          `json:"total"`
-	Remarks      []string         `json:"remarks"`
-	ValidPeriod  int              `json:"valid_period"` // days
-	PaymentTerms string           `json:"payment_terms"`
-	Issuer       PDFCompanyInfo   `json:"issuer"`
+	EstimateNo   string          `json:"estimate_no"`
+	IssueDate    time.Time       `json:"issue_date"`
+	Customer     PDFCustomerInfo `json:"customer"`
+	Recipient    string          `json:"recipient"` // 佐藤 様
+	Title        string          `json:"title"`
+	Items        []PDFLineItem   `json:"items"`
+	SubTotal     float64         `json:"sub_total"`
+	TaxRate      float64         `json:"tax_rate"`
+	Tax          float64         `json:"tax"`
+	Total        float64         `json:"total"`
+	Remarks      []string        `json:"remarks"`
+	ValidPeriod  int             `json:"valid_period"` // days
+	PaymentTerms string          `json:"payment_terms"`
+	Issuer       PDFCompanyInfo  `json:"issuer"`
 }
 
 // PDFCustomerInfo represents customer information for PDF
