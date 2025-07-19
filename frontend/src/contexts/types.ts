@@ -7,6 +7,7 @@ export interface AppState {
   collectionDate: string
   notes: string
   quoteGenerated: boolean
+  pdfUrl: string
   instructionsSaved: boolean
   workSlip: boolean
   weighing: boolean
@@ -29,6 +30,7 @@ export type AppAction =
   | { type: 'SET_COLLECTION_DATE'; payload: string }
   | { type: 'SET_NOTES'; payload: string }
   | { type: 'SET_QUOTE_GENERATED'; payload: boolean }
+  | { type: 'SET_PDF_URL'; payload: string }
   | { type: 'SET_INSTRUCTIONS_SAVED'; payload: boolean }
   | { type: 'SET_WORK_SLIP'; payload: boolean }
   | { type: 'SET_WEIGHING'; payload: boolean }

@@ -13,6 +13,7 @@ export const initialState: AppState = {
   collectionDate: '',
   notes: '',
   quoteGenerated: false,
+  pdfUrl: '',
   instructionsSaved: false,
   workSlip: false,
   weighing: false,
@@ -91,6 +92,12 @@ export function appReducer(state: AppState, action: AppAction): AppState {
       return {
         ...state,
         quoteGenerated: action.payload,
+      }
+    
+    case 'SET_PDF_URL':
+      return {
+        ...state,
+        pdfUrl: action.payload,
       }
     
     case 'SET_INSTRUCTIONS_SAVED':

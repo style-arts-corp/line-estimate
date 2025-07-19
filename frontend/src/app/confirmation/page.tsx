@@ -3,28 +3,58 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
-import { FileText, FileOutput, ExternalLink } from 'lucide-react'
+import { FileText, FileOutput, ExternalLink, Loader2 } from 'lucide-react'
 import { useAppContext } from '@/contexts/AppContext'
+import { PDFService } from '@/lib/pdf-service'
 
 export default function ConfirmationPage() {
   const router = useRouter()
   const { state, dispatch } = useAppContext()
   const [quoteGenerated, setQuoteGenerated] = useState(false)
-
-  const QUOTE_URL = 'https://drive.google.com/file/d/1PjaDRt3vvEs4wBPKz0JMaTzcmMLrKPOl/view?usp=drive_link'
+  const [isGenerating, setIsGenerating] = useState(false)
+  const [pdfUrl, setPdfUrl] = useState<string>('')
+  const [error, setError] = useState<string>('')
 
   useEffect(() => {
     // quoteGenerated 状態を Context から取得
     setQuoteGenerated(state.quoteGenerated)
-  }, [state.quoteGenerated])
+    if (state.pdfUrl) {
+      setPdfUrl(state.pdfUrl)
+    }
+  }, [state.quoteGenerated, state.pdfUrl])
 
-  const handleGenerateQuote = () => {
-    setQuoteGenerated(true)
-    dispatch({ type: 'SET_QUOTE_GENERATED', payload: true })
+  const handleGenerateQuote = async () => {
+    setIsGenerating(true)
+    setError('')
+    
+    try {
+      // Use the PDF service to generate the estimate
+      const result = await PDFService.generateEstimatePDF(
+        state.customerInfo,
+        state.selectedItems,
+        state.totalAmount
+      )
+
+      if (result.success && result.pdfUrl) {
+        setQuoteGenerated(true)
+        setPdfUrl(result.pdfUrl)
+        dispatch({ type: 'SET_QUOTE_GENERATED', payload: true })
+        dispatch({ type: 'SET_PDF_URL', payload: result.pdfUrl })
+      } else {
+        setError(result.error || 'PDF生成に失敗しました')
+      }
+    } catch (err) {
+      console.error('Quote generation error:', err)
+      setError('システムエラーが発生しました')
+    } finally {
+      setIsGenerating(false)
+    }
   }
 
   const handleNavigateToQuote = () => {
-    window.open(QUOTE_URL, '_blank')
+    if (pdfUrl) {
+      window.open(pdfUrl, '_blank')
+    }
   }
 
   const handleNavigateToInstructions = () => {
@@ -106,12 +136,26 @@ export default function ConfirmationPage() {
         </div>
 
         <div className="flex flex-col space-y-4">
+          {error && (
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-700">
+              エラー: {error}
+            </div>
+          )}
+
           {!quoteGenerated ? (
             <button
               onClick={handleGenerateQuote}
-              className="w-full px-6 py-3 bg-blue-600 text-white font-medium rounded-md hover:bg-blue-700 transition-colors"
+              disabled={isGenerating}
+              className="w-full px-6 py-3 bg-blue-600 text-white font-medium rounded-md hover:bg-blue-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center"
             >
-              見積書生成
+              {isGenerating ? (
+                <>
+                  <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                  PDF生成中...
+                </>
+              ) : (
+                '見積書生成'
+              )}
             </button>
           ) : (
             <>
@@ -121,7 +165,8 @@ export default function ConfirmationPage() {
 
               <button
                 onClick={handleNavigateToQuote}
-                className="w-full px-6 py-3 bg-blue-600 text-white font-medium rounded-md hover:bg-blue-700 transition-colors flex items-center justify-center"
+                disabled={!pdfUrl}
+                className="w-full px-6 py-3 bg-blue-600 text-white font-medium rounded-md hover:bg-blue-700 transition-colors flex items-center justify-center disabled:bg-gray-400 disabled:cursor-not-allowed"
               >
                 <FileText className="mr-2 h-5 w-5" />
                 見積書へ遷移
