@@ -1,4 +1,5 @@
 import type { Category } from "./types"
+import { fetchCategoriesFromBackend } from "./google-sheets"
 
 export const MOCK_CATEGORIES: Category[] = [
   {
@@ -63,3 +64,18 @@ export const MOCK_CATEGORIES: Category[] = [
     ],
   },
 ]
+
+// Hook to fetch categories from backend (which decides between Google Sheets or mock data)
+export async function getCategories(sortDescending: boolean = false): Promise<Category[]> {
+  try {
+    // Fetch from backend API (backend will decide between Google Sheets or mock data)
+    const categories = await fetchCategoriesFromBackend(sortDescending)
+
+    // If backend returns data, use it; otherwise use local mock data
+    return categories.length > 0 ? categories : MOCK_CATEGORIES
+  } catch (error) {
+    console.error('Error fetching categories:', error)
+    // Fallback to local mock data if backend fails
+    return MOCK_CATEGORIES
+  }
+}

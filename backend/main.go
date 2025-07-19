@@ -51,6 +51,9 @@ func main() {
 			auth.POST("/register", handlers.Register)
 		}
 
+		// カテゴリー関連（認証不要）
+		v1.GET("/categories", handlers.GetCategories)
+
 		// 認証必要エンドポイント
 		protected := v1.Group("/")
 		protected.Use(middleware.AuthMiddleware())
