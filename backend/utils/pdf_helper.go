@@ -119,14 +119,14 @@ func (h *PDFHelper) DrawTable(items []models.PDFLineItem, startY float64) (float
 		h.pdf.SetX(currentX)
 		h.pdf.SetY(startY)
 		h.pdf.Cell(nil, header)
-		
+
 		// Draw vertical lines
 		h.pdf.Line(currentX, startY-5, currentX, startY+20)
 		currentX += colWidths[i]
 	}
 	// Last vertical line
 	h.pdf.Line(currentX, startY-5, currentX, startY+20)
-	
+
 	// Draw horizontal line under headers
 	h.pdf.Line(startX, startY+20, startX+530, startY+20)
 
@@ -134,14 +134,14 @@ func (h *PDFHelper) DrawTable(items []models.PDFLineItem, startY float64) (float
 	currentY := startY + 30
 	for _, item := range items {
 		currentX = startX
-		
+
 		// Description
 		h.pdf.SetX(currentX + 5)
 		h.pdf.SetY(currentY)
 		h.pdf.Cell(nil, item.Description)
 		h.pdf.Line(currentX, currentY-5, currentX, currentY+20)
 		currentX += colWidths[0]
-		
+
 		// Quantity
 		h.pdf.SetX(currentX + 5)
 		h.pdf.SetY(currentY)
@@ -152,27 +152,27 @@ func (h *PDFHelper) DrawTable(items []models.PDFLineItem, startY float64) (float
 		h.pdf.Cell(nil, quantityStr)
 		h.pdf.Line(currentX, currentY-5, currentX, currentY+20)
 		currentX += colWidths[1]
-		
+
 		// Unit price
 		h.pdf.SetX(currentX + 5)
 		h.pdf.SetY(currentY)
 		h.pdf.Cell(nil, FormatCurrency(item.UnitPrice))
 		h.pdf.Line(currentX, currentY-5, currentX, currentY+20)
 		currentX += colWidths[2]
-		
+
 		// Amount
 		h.pdf.SetX(currentX + 5)
 		h.pdf.SetY(currentY)
 		h.pdf.Cell(nil, FormatCurrency(item.Amount))
 		h.pdf.Line(currentX, currentY-5, currentX, currentY+20)
 		currentX += colWidths[3]
-		
+
 		// Last vertical line
 		h.pdf.Line(currentX, currentY-5, currentX, currentY+20)
-		
+
 		// Horizontal line
 		h.pdf.Line(startX, currentY+20, startX+530, currentY+20)
-		
+
 		currentY += 25
 	}
 
@@ -247,7 +247,7 @@ func (h *PDFHelper) DrawRemarks(remarks []string, startY float64) error {
 func FormatCurrency(amount float64) string {
 	// Format with comma separators
 	formatted := fmt.Sprintf("%.0f", amount)
-	
+
 	// Add commas
 	parts := []string{}
 	for i := len(formatted); i > 0; i -= 3 {
@@ -257,6 +257,6 @@ func FormatCurrency(amount float64) string {
 		}
 		parts = append([]string{formatted[start:i]}, parts...)
 	}
-	
+
 	return strings.Join(parts, ",")
 }

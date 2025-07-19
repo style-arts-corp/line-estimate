@@ -1,3 +1,5 @@
+<!-- GitHub Copilotは日本語でレビューして欲しいです。I want GitHub Copilot to review in Japanese. -->
+
 @claude
 
 ## 概要
@@ -59,3 +61,6 @@ Closes #
 
 ## 追加メモ
 <!-- レビュアーへの追加情報 -->
+
+
+<!-- GitHub Copilotは日本語でレビューして欲しいです。I want GitHub Copilot to review in Japanese. -->

@@ -9,7 +9,6 @@ import (
 	"github.com/joho/godotenv"
 
 	"line-estimate-backend/handlers"
-	"line-estimate-backend/middleware"
 )
 
 func main() {
@@ -29,8 +28,19 @@ func main() {
 	// Ginエンジンの初期化
 	r := gin.Default()
 
-	// CORS設定
-	r.Use(middleware.CORSMiddleware())
+	// CORS設定（簡易版）
+	r.Use(func(c *gin.Context) {
+		c.Header("Access-Control-Allow-Origin", "*")
+		c.Header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+		c.Header("Access-Control-Allow-Headers", "Content-Type, Authorization")
+
+		if c.Request.Method == "OPTIONS" {
+			c.AbortWithStatus(204)
+			return
+		}
+
+		c.Next()
+	})
 
 	// ヘルスチェック
 	r.GET("/health", handlers.HealthCheck)
@@ -39,42 +49,37 @@ func main() {
 	dev := r.Group("/dev")
 	{
 		dev.GET("/create-pdf", handlers.CreatePDF)
+		dev.GET("/create-instruction-pdf", handlers.CreateTestInstructionPDF)
 	}
 
 	// API v1 ルートグループ
 	v1 := r.Group("/api/v1")
 	{
-		// 認証不要エンドポイント
-		auth := v1.Group("/auth")
-		{
-			auth.POST("/login", handlers.Login)
-			auth.POST("/register", handlers.Register)
-		}
-
-		// カテゴリー関連（認証不要）
+		// カテゴリー関連
 		v1.GET("/categories", handlers.GetCategories)
 
-		// 認証必要エンドポイント
-		protected := v1.Group("/")
-		protected.Use(middleware.AuthMiddleware())
+		// 見積もり関連
+		estimates := v1.Group("/estimates")
 		{
-			// 見積もり関連
-			estimates := protected.Group("/estimates")
-			{
-				estimates.GET("/", handlers.GetEstimates)
-				estimates.POST("/", handlers.CreateEstimate)
-				estimates.GET("/:id", handlers.GetEstimate)
-				estimates.PUT("/:id", handlers.UpdateEstimate)
-				estimates.DELETE("/:id", handlers.DeleteEstimate)
-				estimates.POST("/pdf", handlers.CreateEstimatePDF) // 一時的にコメントアウト
-			}
+			estimates.GET("/", handlers.GetEstimates)
+			estimates.POST("/", handlers.CreateEstimate)
+			estimates.GET("/:id", handlers.GetEstimate)
+			estimates.PUT("/:id", handlers.UpdateEstimate)
+			estimates.DELETE("/:id", handlers.DeleteEstimate)
+			estimates.POST("/pdf", handlers.CreateEstimatePDF)
+		}
 
-			// ユーザー関連
-			users := protected.Group("/users")
-			{
-				users.GET("/profile", handlers.GetProfile)
-				users.PUT("/profile", handlers.UpdateProfile)
-			}
+		// 指示書関連
+		instructions := v1.Group("/instructions")
+		{
+			instructions.POST("/pdf", handlers.CreateInstructionPDF)
+		}
+
+		// ユーザー関連
+		users := v1.Group("/users")
+		{
+			users.GET("/profile", handlers.GetProfile)
+			users.PUT("/profile", handlers.UpdateProfile)
 		}
 	}
 
