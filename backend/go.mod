@@ -9,6 +9,8 @@ require (
 	github.com/joho/godotenv v1.4.0
 	github.com/signintech/gopdf v0.29.0
 	golang.org/x/crypto v0.36.0
+	golang.org/x/oauth2 v0.28.0
+	google.golang.org/api v0.211.0
 )
 
 require (
