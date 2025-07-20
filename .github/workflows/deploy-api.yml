@@ -116,8 +116,8 @@ jobs:
             --min-instances 0 \
             --max-instances 10 \
             --port 8080 \
-            --set-env-vars="GIN_MODE=${{ steps.env.outputs.GIN_MODE }}" \
-            --set-secrets="JWT_SECRET=jwt-secret:latest" \
+            --set-env-vars="GIN_MODE=${{ steps.env.outputs.GIN_MODE }},GOOGLE_DRIVE_FOLDER_ID=1X0IQJWG6Ss47skLDgH_xkJGRGXmuE7Kf,SAVE_LOCAL_PDF=false" \
+            --set-secrets="JWT_SECRET=jwt-secret:latest,GOOGLE_SERVICE_ACCOUNT_KEY=drive-service-account-key:latest" \
             --service-account github-action-999236392@disposal-estimate.iam.gserviceaccount.com \
             --timeout 300
 
