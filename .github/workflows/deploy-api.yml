@@ -73,9 +73,6 @@ jobs:
       - name: Determine environment and service name
         id: env
         run: |
-          # ブランチ名から refs/heads/ を除去し、特殊文字をハイフンに置換
-          BRANCH_NAME=$(echo "${{ github.ref }}" | sed 's|refs/heads/||' | sed 's|[^a-zA-Z0-9]|-|g' | tr '[:upper:]' '[:lower:]')
-          
           if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
             echo "ENV=prod" >> $GITHUB_OUTPUT
             echo "SERVICE_NAME=disposal-estimate-api" >> $GITHUB_OUTPUT
@@ -83,10 +80,6 @@ jobs:
           elif [[ "${{ github.ref }}" == "refs/heads/develop" ]]; then
             echo "ENV=dev" >> $GITHUB_OUTPUT
             echo "SERVICE_NAME=disposal-estimate-api-dev" >> $GITHUB_OUTPUT
-            echo "GIN_MODE=debug" >> $GITHUB_OUTPUT
-          else
-            echo "ENV=feature" >> $GITHUB_OUTPUT
-            echo "SERVICE_NAME=disposal-estimate-api-${BRANCH_NAME}" >> $GITHUB_OUTPUT
             echo "GIN_MODE=debug" >> $GITHUB_OUTPUT
           fi
 
@@ -116,10 +109,9 @@ jobs:
             --min-instances 0 \
             --max-instances 10 \
             --port 8080 \
-            --set-env-vars="GIN_MODE=${{ steps.env.outputs.GIN_MODE }},GOOGLE_DRIVE_FOLDER_ID=1X0IQJWG6Ss47skLDgH_xkJGRGXmuE7Kf,SAVE_LOCAL_PDF=false" \
+            --set-env-vars="GIN_MODE=${{ steps.env.outputs.GIN_MODE }}" \
             --set-secrets="JWT_SECRET=jwt-secret:latest" \
-            --set-secrets="GOOGLE_SERVICE_ACCOUNT_KEY=drive-service-account-key:latest" \
-            --service-account 458490939918-compute@developer.gserviceaccount.com \
+            --service-account github-action-999236392@disposal-estimate.iam.gserviceaccount.com \
             --timeout 300
 
       - name: Get service URL
