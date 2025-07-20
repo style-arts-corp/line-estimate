@@ -110,7 +110,7 @@ jobs:
             --max-instances 10 \
             --port 8080 \
             --set-env-vars="GIN_MODE=${{ steps.env.outputs.GIN_MODE }},SAVE_LOCAL_PDF=false" \
-            --set-secrets="JWT_SECRET=jwt-secret:latest,GOOGLE_SERVICE_ACCOUNT_KEY=google-drive-service-key:latest,GOOGLE_DRIVE_FOLDER_ID=google-drive-folder-id:latest" \
+            --set-secrets="JWT_SECRET=jwt-secret:latest,GOOGLE_SERVICE_ACCOUNT_KEY=drive-service-account-key:latest,GOOGLE_DRIVE_FOLDER_ID=google-drive-folder-id:latest" \
             --service-account github-action-999236392@disposal-estimate.iam.gserviceaccount.com \
             --timeout 300
 
