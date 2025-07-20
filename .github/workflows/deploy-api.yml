@@ -110,7 +110,9 @@ jobs:
             --max-instances 10 \
             --port 8080 \
             --set-env-vars="GIN_MODE=${{ steps.env.outputs.GIN_MODE }},SAVE_LOCAL_PDF=false" \
-            --set-secrets="JWT_SECRET=projects/disposal-estimate/secrets/jwt-secret:latest,GOOGLE_SERVICE_ACCOUNT_KEY=projects/disposal-estimate/secrets/drive-service-account-key:latest,GOOGLE_DRIVE_FOLDER_ID=projects/disposal-estimate/secrets/google-drive-folder-id:latest" \
+            --set-secrets="JWT_SECRET=jwt-secret:latest" \
+            --set-secrets="GOOGLE_SERVICE_ACCOUNT_KEY=drive-service-account-key:latest" \
+            --set-secrets="GOOGLE_DRIVE_FOLDER_ID=google-drive-folder-id:latest" \
             --timeout 300
 
       - name: Get service URL
