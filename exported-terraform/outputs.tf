@@ -20,3 +20,22 @@ output "jwt_secret_id" {
 #   description = "The name of the Cloud Run service"
 #   value       = module.cloud_run.service_name
 # }
+
+# Google Drive Service Account outputs
+output "drive_service_account_email" {
+  description = "The email address of the Google Drive service account"
+  value       = google_service_account.drive_service.email
+  sensitive   = false
+}
+
+output "drive_service_account_id" {
+  description = "The ID of the Google Drive service account"
+  value       = google_service_account.drive_service.id
+  sensitive   = false
+}
+
+output "drive_service_key_secret_id" {
+  description = "The Secret Manager secret ID for the Google Drive service account key"
+  value       = google_secret_manager_secret.drive_service_key.secret_id
+  sensitive   = false
+}

@@ -4,8 +4,8 @@ FROM golang:1.24-alpine
 # Install Air for hot reloading
 RUN go install github.com/air-verse/air@latest
 
-# Install git and other dependencies
-RUN apk add --no-cache git
+# Install git, ca-certificates and other dependencies for Google APIs
+RUN apk add --no-cache git ca-certificates
 
 # Set working directory
 WORKDIR /app

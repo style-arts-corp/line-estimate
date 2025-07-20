@@ -21,3 +21,9 @@ variable "billing_account" {
   type        = string
   default     = "01E194-E561F0-D8CB93"
 }
+
+variable "google_drive_folder_id" {
+  description = "Google Drive folder ID for PDF uploads (optional)"
+  type        = string
+  default     = ""
+}

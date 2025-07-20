@@ -1,1 +1,6 @@
 tmp/
+.env
+service-account-key*.json
+disposal-estimate-*.json
+*.pem
+*.key

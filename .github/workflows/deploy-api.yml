@@ -73,6 +73,9 @@ jobs:
       - name: Determine environment and service name
         id: env
         run: |
+          # ブランチ名から refs/heads/ を除去し、特殊文字をハイフンに置換
+          BRANCH_NAME=$(echo "${{ github.ref }}" | sed 's|refs/heads/||' | sed 's|[^a-zA-Z0-9]|-|g' | tr '[:upper:]' '[:lower:]')
+          
           if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
             echo "ENV=prod" >> $GITHUB_OUTPUT
             echo "SERVICE_NAME=disposal-estimate-api" >> $GITHUB_OUTPUT
@@ -81,18 +84,25 @@ jobs:
             echo "ENV=dev" >> $GITHUB_OUTPUT
             echo "SERVICE_NAME=disposal-estimate-api-dev" >> $GITHUB_OUTPUT
             echo "GIN_MODE=debug" >> $GITHUB_OUTPUT
+          else
+            echo "ENV=feature" >> $GITHUB_OUTPUT
+            echo "SERVICE_NAME=disposal-estimate-api-${BRANCH_NAME}" >> $GITHUB_OUTPUT
+            echo "GIN_MODE=debug" >> $GITHUB_OUTPUT
           fi
 
       - name: Build Docker image
         working-directory: ./backend
         run: |
           IMAGE_TAG=${{ env.ARTIFACT_REGISTRY }}/${{ steps.env.outputs.SERVICE_NAME }}:${{ github.sha }}
-          docker build -t $IMAGE_TAG .
+          LATEST_TAG=${{ env.ARTIFACT_REGISTRY }}/${{ steps.env.outputs.SERVICE_NAME }}:latest
+          docker build -t $IMAGE_TAG -t $LATEST_TAG .
           echo "IMAGE_TAG=$IMAGE_TAG" >> $GITHUB_ENV
+          echo "LATEST_TAG=$LATEST_TAG" >> $GITHUB_ENV
 
       - name: Push Docker image
         run: |
           docker push ${{ env.IMAGE_TAG }}
+          docker push ${{ env.LATEST_TAG }}
 
       - name: Deploy to Cloud Run
         run: |
