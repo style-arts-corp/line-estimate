@@ -90,8 +90,8 @@ variable "drive_service_key_secret_id" {
   default     = ""
 }
 
-variable "google_drive_folder_id" {
-  description = "Google Drive folder ID for PDF uploads"
+variable "google_drive_folder_id_secret_id" {
+  description = "Secret Manager secret ID for Google Drive folder ID"
   type        = string
   default     = ""
 }

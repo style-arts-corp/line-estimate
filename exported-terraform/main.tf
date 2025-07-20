@@ -47,16 +47,17 @@ module "secret_manager" {
 module "cloud_run" {
   source = "./modules/cloud-run"
   
-  project_id                  = var.project_id
-  region                      = var.region
-  artifact_registry_url       = module.artifact_registry.repository_url
-  jwt_secret_id               = module.secret_manager.jwt_secret_id
-  drive_service_key_secret_id = google_secret_manager_secret.drive_service_key.secret_id
-  google_drive_folder_id      = var.google_drive_folder_id
-  # initial_image               = "asia-northeast1-docker.pkg.dev/disposal-estimate/disposal-estimate-api/disposal-estimate-api:amd64"
+  project_id                       = var.project_id
+  region                          = var.region
+  artifact_registry_url           = module.artifact_registry.repository_url
+  jwt_secret_id                   = module.secret_manager.jwt_secret_id
+  drive_service_key_secret_id     = google_secret_manager_secret.drive_service_key.secret_id
+  google_drive_folder_id_secret_id = module.secret_manager.google_drive_folder_id_secret_id
+  # initial_image                  = "asia-northeast1-docker.pkg.dev/disposal-estimate/disposal-estimate-api/disposal-estimate-api:amd64"
   
   depends_on = [
-    google_secret_manager_secret.drive_service_key
+    google_secret_manager_secret.drive_service_key,
+    module.secret_manager
   ]
 }
 
