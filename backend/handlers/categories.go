@@ -1,12 +1,14 @@
 package handlers
 
 import (
+	"fmt"
 	"net/http"
 	"os"
 	"strconv"
 
-	"github.com/gin-gonic/gin"
 	"line-estimate-backend/utils"
+
+	"github.com/gin-gonic/gin"
 )
 
 // Category represents a category with items
@@ -41,10 +43,12 @@ func GetCategories(c *gin.Context) {
 		if err != nil {
 			// Log error but fallback to mock data
 			utils.Logger.Printf("Google Sheets fetch failed, falling back to mock data: %v", err)
-			categories = getMockCategories()
+			// categories = getMockCategories()
+			categories, err = fetchCategoriesFromGoogleSheets()
 		}
 	} else {
-		categories = getMockCategories()
+		// categories = getMockCategories()
+		categories, err = fetchCategoriesFromGoogleSheets()
 	}
 
 	// Sort if requested
@@ -65,6 +69,10 @@ func fetchCategoriesFromGoogleSheets() ([]CategoryResponse, error) {
 	apiKey := os.Getenv("GOOGLE_SHEETS_API_KEY")
 	spreadsheetID := os.Getenv("SPREADSHEET_ID")
 
+	// Debug: Print configuration
+	fmt.Printf("DEBUG: API Key: %s\n", apiKey)
+	fmt.Printf("DEBUG: Spreadsheet ID: %s\n", spreadsheetID)
+
 	if apiKey == "" || spreadsheetID == "" {
 		return nil, gin.Error{
 			Err:  nil,
@@ -74,15 +82,24 @@ func fetchCategoriesFromGoogleSheets() ([]CategoryResponse, error) {
 	}
 
 	// Make HTTP request to Google Sheets API
-	url := "https://sheets.googleapis.com/v4/spreadsheets/" + spreadsheetID + "/values/Sheet1!A2:E?key=" + apiKey
+	url := "https://sheets.googleapis.com/v4/spreadsheets/" + spreadsheetID + "/values/categories_data!A2:E?key=" + apiKey
+	fmt.Printf("DEBUG: Request URL: %s\n", url)
 
 	resp, err := http.Get(url)
 	if err != nil {
+		fmt.Printf("DEBUG: HTTP request error: %v\n", err)
 		return nil, err
 	}
 	defer resp.Body.Close()
 
+	fmt.Printf("DEBUG: HTTP Status: %d\n", resp.StatusCode)
+
 	if resp.StatusCode != http.StatusOK {
+		// Read response body for error details
+		body := make([]byte, 1024)
+		n, _ := resp.Body.Read(body)
+		fmt.Printf("DEBUG: Error response body: %s\n", string(body[:n]))
+
 		return nil, gin.Error{
 			Err:  nil,
 			Type: gin.ErrorTypePublic,
@@ -96,11 +113,20 @@ func fetchCategoriesFromGoogleSheets() ([]CategoryResponse, error) {
 	}
 
 	if err := utils.ParseJSON(resp.Body, &data); err != nil {
+		fmt.Printf("DEBUG: JSON parse error: %v\n", err)
 		return nil, err
 	}
 
+	fmt.Printf("DEBUG: Received %d rows from Google Sheets\n", len(data.Values))
+	if len(data.Values) > 0 {
+		fmt.Printf("DEBUG: First row example: %v\n", data.Values[0])
+	}
+
 	// Transform data to categories
-	return transformRowsToCategories(data.Values), nil
+	categories := transformRowsToCategories(data.Values)
+	fmt.Printf("DEBUG: Transformed to %d categories\n", len(categories))
+
+	return categories, nil
 }
 
 // transformRowsToCategories transforms Google Sheets rows to categories
