@@ -33,6 +33,35 @@ resource "google_cloud_run_v2_service" "disposal_estimate_api" {
         }
       }
 
+      # Google Drive service account key from Secret Manager
+      dynamic "env" {
+        for_each = var.drive_service_key_secret_id != "" ? [1] : []
+        content {
+          name = "GOOGLE_SERVICE_ACCOUNT_KEY"
+          value_source {
+            secret_key_ref {
+              secret  = "projects/${var.project_id}/secrets/${var.drive_service_key_secret_id}"
+              version = "latest"
+            }
+          }
+        }
+      }
+
+      # Google Drive folder ID (optional)
+      dynamic "env" {
+        for_each = var.google_drive_folder_id != "" ? [1] : []
+        content {
+          name  = "GOOGLE_DRIVE_FOLDER_ID"
+          value = var.google_drive_folder_id
+        }
+      }
+
+      # Save local PDF option
+      env {
+        name  = "SAVE_LOCAL_PDF"
+        value = "false"
+      }
+
       resources {
         limits = {
           cpu    = var.cpu_limit
@@ -63,7 +92,7 @@ resource "google_cloud_run_v2_service" "disposal_estimate_api" {
       }
     }
 
-    service_account = var.service_account_email != "" ? var.service_account_email : "458490939918-compute@developer.gserviceaccount.com"
+    service_account = var.service_account_email != "" ? var.service_account_email : null
     
     timeout = "${var.request_timeout}s"
   }

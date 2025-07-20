@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"strings"
 
 	"golang.org/x/oauth2/google"
 	"google.golang.org/api/drive/v3"
@@ -25,8 +26,23 @@ func NewDriveService() (*DriveService, error) {
 		return nil, fmt.Errorf("GOOGLE_SERVICE_ACCOUNT_KEY environment variable is not set")
 	}
 
+	var jsonCredentials []byte
+	var err error
+
+	// ファイルパスかJSONかを判定
+	if strings.HasPrefix(serviceAccountKey, "{") {
+		// JSON文字列の場合
+		jsonCredentials = []byte(serviceAccountKey)
+	} else {
+		// ファイルパスの場合
+		jsonCredentials, err = os.ReadFile(serviceAccountKey)
+		if err != nil {
+			return nil, fmt.Errorf("unable to read service account key file: %v", err)
+		}
+	}
+
 	// サービスアカウントの認証情報を作成
-	config, err := google.JWTConfigFromJSON([]byte(serviceAccountKey), drive.DriveScope)
+	config, err := google.JWTConfigFromJSON(jsonCredentials, drive.DriveScope)
 	if err != nil {
 		return nil, fmt.Errorf("unable to parse service account key: %v", err)
 	}

@@ -83,3 +83,15 @@ variable "initial_image" {
   type        = string
   default     = ""
 }
+
+variable "drive_service_key_secret_id" {
+  description = "The ID of the Google Drive service account key secret in Secret Manager"
+  type        = string
+  default     = ""
+}
+
+variable "google_drive_folder_id" {
+  description = "Google Drive folder ID for PDF uploads"
+  type        = string
+  default     = ""
+}

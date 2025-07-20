@@ -132,16 +132,41 @@ func CreateEstimatePDF(c *gin.Context) {
 		return
 	}
 
+	// Generate unique filename with timestamp
+	timestamp := time.Now().Format("20060102_150405")
+	filename := fmt.Sprintf("estimate_%s_%s.pdf", estimate.EstimateNo, timestamp)
+
+	// Check if local save only mode
+	saveLocal := os.Getenv("SAVE_LOCAL_PDF")
+
+	if saveLocal == "true" {
+		// ローカル保存のみ
+		pdfDir := "./pdfs"
+		if err := os.MkdirAll(pdfDir, 0755); err != nil {
+			utils.ErrorResponse(c, 500, "PDFディレクトリの作成に失敗しました: "+err.Error())
+			return
+		}
+		localPath := filepath.Join(pdfDir, filename)
+		if err := pdf.WritePdf(localPath); err != nil {
+			utils.ErrorResponse(c, 500, "PDFのローカル保存に失敗しました: "+err.Error())
+			return
+		}
+
+		// Return success response for local save
+		utils.SuccessResponse(c, gin.H{
+			"message":    "見積書PDFがローカルに正常に作成されました",
+			"filename":   filename,
+			"local_path": localPath,
+		})
+		return
+	}
+
 	// Google Driveサービスを初期化
 	driveService, err := services.NewDriveService()
 	if err != nil {
 		utils.ErrorResponse(c, 500, "Google Driveサービスの初期化に失敗しました: "+err.Error())
 		return
 	}
-
-	// Generate unique filename with timestamp
-	timestamp := time.Now().Format("20060102_150405")
-	filename := fmt.Sprintf("estimate_%s_%s.pdf", estimate.EstimateNo, timestamp)
 
 	// Google Driveにアップロード
 	uploadedFile, err := driveService.UploadFile(filename, "application/pdf", buf.Bytes())
@@ -150,22 +175,12 @@ func CreateEstimatePDF(c *gin.Context) {
 		return
 	}
 
-	// 必要に応じてローカルにも保存（バックアップとして）
-	saveLocal := os.Getenv("SAVE_LOCAL_PDF")
-	if saveLocal == "true" {
-		pdfDir := "./pdfs"
-		if err := os.MkdirAll(pdfDir, 0755); err == nil {
-			localPath := filepath.Join(pdfDir, filename)
-			pdf.WritePdf(localPath)
-		}
-	}
-
 	// Return success response
 	utils.SuccessResponse(c, gin.H{
-		"message":      "見積書PDFが正常に作成されました",
-		"filename":     filename,
+		"message":       "見積書PDFが正常に作成されました",
+		"filename":      filename,
 		"drive_file_id": uploadedFile.Id,
-		"drive_url":    fmt.Sprintf("https://drive.google.com/file/d/%s/view", uploadedFile.Id),
+		"drive_url":     fmt.Sprintf("https://drive.google.com/file/d/%s/view", uploadedFile.Id),
 	})
 }
 
@@ -229,16 +244,41 @@ func CreatePDF(c *gin.Context) {
 		return
 	}
 
+	// Generate unique filename with timestamp
+	timestamp := time.Now().Format("20060102_150405")
+	filename := fmt.Sprintf("test_estimate_%s.pdf", timestamp)
+
+	// Check if local save only mode
+	saveLocal := os.Getenv("SAVE_LOCAL_PDF")
+
+	if saveLocal == "true" {
+		// ローカル保存のみ
+		pdfDir := "./pdfs"
+		if err := os.MkdirAll(pdfDir, 0755); err != nil {
+			utils.ErrorResponse(c, 500, "PDFディレクトリの作成に失敗しました: "+err.Error())
+			return
+		}
+		localPath := filepath.Join(pdfDir, filename)
+		if err := pdf.WritePdf(localPath); err != nil {
+			utils.ErrorResponse(c, 500, "PDFのローカル保存に失敗しました: "+err.Error())
+			return
+		}
+
+		// Return success response for local save
+		utils.SuccessResponse(c, gin.H{
+			"message":    "テスト見積書PDFがローカルに正常に作成されました",
+			"filename":   filename,
+			"local_path": localPath,
+		})
+		return
+	}
+
 	// Google Driveサービスを初期化
 	driveService, err := services.NewDriveService()
 	if err != nil {
 		utils.ErrorResponse(c, 500, "Google Driveサービスの初期化に失敗しました: "+err.Error())
 		return
 	}
-
-	// Generate unique filename with timestamp
-	timestamp := time.Now().Format("20060102_150405")
-	filename := fmt.Sprintf("test_estimate_%s.pdf", timestamp)
 
 	// Google Driveにアップロード
 	uploadedFile, err := driveService.UploadFile(filename, "application/pdf", buf.Bytes())
@@ -247,21 +287,11 @@ func CreatePDF(c *gin.Context) {
 		return
 	}
 
-	// 必要に応じてローカルにも保存（バックアップとして）
-	saveLocal := os.Getenv("SAVE_LOCAL_PDF")
-	if saveLocal == "true" {
-		pdfDir := "./pdfs"
-		if err := os.MkdirAll(pdfDir, 0755); err == nil {
-			localPath := filepath.Join(pdfDir, filename)
-			pdf.WritePdf(localPath)
-		}
-	}
-
 	// Return success response
 	utils.SuccessResponse(c, gin.H{
-		"message":      "テスト見積書PDFが正常に作成されました",
-		"filename":     filename,
+		"message":       "テスト見積書PDFが正常に作成されました",
+		"filename":      filename,
 		"drive_file_id": uploadedFile.Id,
-		"drive_url":    fmt.Sprintf("https://drive.google.com/file/d/%s/view", uploadedFile.Id),
+		"drive_url":     fmt.Sprintf("https://drive.google.com/file/d/%s/view", uploadedFile.Id),
 	})
 }
