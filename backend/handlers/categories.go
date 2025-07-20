@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"fmt"
 	"net/http"
 	"os"
 	"strconv"
@@ -26,6 +25,7 @@ type Item struct {
 	Name     string `json:"name"`
 	Price    int    `json:"price"`
 	Category string `json:"category"`
+	Hiragana string `json:"-"` // Internal field for sorting, not exposed in JSON
 }
 
 // GetCategories handles fetching categories based on environment
@@ -45,8 +45,7 @@ func GetCategories(c *gin.Context) {
 		if err != nil {
 			// Log error but fallback to mock data
 			utils.Logger.Printf("Google Sheets fetch failed, falling back to mock data: %v", err)
-			// categories = getMockCategories()
-			categories, err = fetchCategoriesFromGoogleSheets()
+			categories = getMockCategories()
 		}
 	} else {
 		// Use mock data for development
@@ -54,7 +53,7 @@ func GetCategories(c *gin.Context) {
 	}
 
 	if sort {
-		sortCategoriesInHiraganaOrder(categories)
+		sortItemsInHiraganaOrder(categories)
 	}
 
 	utils.SuccessResponse(c, gin.H{
@@ -70,10 +69,6 @@ func fetchCategoriesFromGoogleSheets() ([]CategoryResponse, error) {
 	apiKey := os.Getenv("GOOGLE_SHEETS_API_KEY")
 	spreadsheetID := os.Getenv("SPREADSHEET_ID")
 
-	// Debug: Print configuration
-	fmt.Printf("DEBUG: API Key: %s\n", apiKey)
-	fmt.Printf("DEBUG: Spreadsheet ID: %s\n", spreadsheetID)
-
 	if apiKey == "" || spreadsheetID == "" {
 		return nil, gin.Error{
 			Err:  nil,
@@ -84,23 +79,14 @@ func fetchCategoriesFromGoogleSheets() ([]CategoryResponse, error) {
 
 	// Make HTTP request to Google Sheets API
 	url := "https://sheets.googleapis.com/v4/spreadsheets/" + spreadsheetID + "/values/categories_data!A1:F?key=" + apiKey
-	fmt.Printf("DEBUG: Request URL: %s\n", url)
 
 	resp, err := http.Get(url)
 	if err != nil {
-		fmt.Printf("DEBUG: HTTP request error: %v\n", err)
 		return nil, err
 	}
 	defer resp.Body.Close()
 
-	fmt.Printf("DEBUG: HTTP Status: %d\n", resp.StatusCode)
-
 	if resp.StatusCode != http.StatusOK {
-		// Read response body for error details
-		body := make([]byte, 1024)
-		n, _ := resp.Body.Read(body)
-		fmt.Printf("DEBUG: Error response body: %s\n", string(body[:n]))
-
 		return nil, gin.Error{
 			Err:  nil,
 			Type: gin.ErrorTypePublic,
@@ -114,17 +100,7 @@ func fetchCategoriesFromGoogleSheets() ([]CategoryResponse, error) {
 	}
 
 	if err := utils.ParseJSON(resp.Body, &data); err != nil {
-		fmt.Printf("DEBUG: JSON parse error: %v\n", err)
 		return nil, err
-	}
-
-	fmt.Printf("DEBUG: Received %d rows from Google Sheets\n", len(data.Values))
-	if len(data.Values) > 0 {
-		fmt.Printf("DEBUG: Headers: %v\n", data.Values[0])
-		if len(data.Values) > 1 {
-			fmt.Printf("DEBUG: First data row example: %v\n", data.Values[1])
-			fmt.Printf("DEBUG: Column mapping - F(price): %s\n", data.Values[1][5])
-		}
 	}
 
 	// Skip header row (first row) for data processing
@@ -135,7 +111,6 @@ func fetchCategoriesFromGoogleSheets() ([]CategoryResponse, error) {
 
 	// Transform data to categories
 	categories := transformRowsToCategories(dataRows)
-	fmt.Printf("DEBUG: Transformed to %d categories\n", len(categories))
 
 	return categories, nil
 }
@@ -143,7 +118,6 @@ func fetchCategoriesFromGoogleSheets() ([]CategoryResponse, error) {
 // transformRowsToCategories transforms Google Sheets rows to categories
 func transformRowsToCategories(rows [][]string) []CategoryResponse {
 	categoryMap := make(map[string]*CategoryResponse)
-	categoryHiraganaMap := make(map[string]string) // Track hiragana for each category
 
 	for _, row := range rows {
 		if len(row) < 6 { // Expecting 6 columns
@@ -154,14 +128,8 @@ func transformRowsToCategories(rows [][]string) []CategoryResponse {
 		categoryName := row[1]
 		itemID := row[2]
 		itemName := row[3]
-		// itemNameHiragana := row[4] // Column E - hiragana (for items)
+		itemNameHiragana := row[4] // Column E - hiragana (for items)
 		price, _ := strconv.Atoi(row[5]) // Parse price from column F
-
-		// Extract category hiragana from category name using our conversion function
-		if _, exists := categoryHiraganaMap[categoryID]; !exists {
-			categoryHiragana := convertToHiragana(categoryName)
-			categoryHiraganaMap[categoryID] = categoryHiragana
-		}
 
 		// Get or create category
 		if _, exists := categoryMap[categoryID]; !exists {
@@ -169,7 +137,7 @@ func transformRowsToCategories(rows [][]string) []CategoryResponse {
 				ID:       categoryID,
 				Name:     categoryName,
 				Items:    []Item{},
-				Hiragana: categoryHiraganaMap[categoryID],
+				Hiragana: convertToHiragana(categoryName), // Convert category name to hiragana
 			}
 		}
 
@@ -179,6 +147,7 @@ func transformRowsToCategories(rows [][]string) []CategoryResponse {
 			Name:     itemName,
 			Price:    price,
 			Category: categoryID,
+			Hiragana: itemNameHiragana, // Use hiragana from column E
 		})
 	}
 
@@ -188,33 +157,21 @@ func transformRowsToCategories(rows [][]string) []CategoryResponse {
 		categories = append(categories, *category)
 	}
 
-	// Sort by Japanese hiragana order using stored hiragana
-	sortCategoriesInHiraganaOrder(categories)
-
 	return categories
 }
 
-// sortCategoriesInHiraganaOrder sorts categories by Japanese hiragana reading order
-func sortCategoriesInHiraganaOrder(categories []CategoryResponse) {
-	// Debug: Print hiragana values before sorting
-	fmt.Printf("DEBUG: Before hiragana sorting:\n")
-	for i, cat := range categories {
-		fmt.Printf("  %d. %s -> '%s'\n", i+1, cat.Name, cat.Hiragana)
-	}
-
-	// Sort by hiragana reading using stored hiragana field
-	for i := 0; i < len(categories)-1; i++ {
-		for j := i + 1; j < len(categories); j++ {
-			if categories[i].Hiragana > categories[j].Hiragana {
-				categories[i], categories[j] = categories[j], categories[i]
+// sortItemsInHiraganaOrder sorts items within each category by Japanese hiragana reading order
+func sortItemsInHiraganaOrder(categories []CategoryResponse) {
+	// Sort items within each category by hiragana reading from column E
+	for i := range categories {
+		items := categories[i].Items
+		for j := 0; j < len(items)-1; j++ {
+			for k := j + 1; k < len(items); k++ {
+				if items[j].Hiragana > items[k].Hiragana {
+					items[j], items[k] = items[k], items[j]
+				}
 			}
 		}
-	}
-
-	// Debug: Print hiragana values after sorting
-	fmt.Printf("DEBUG: After hiragana sorting:\n")
-	for i, cat := range categories {
-		fmt.Printf("  %d. %s -> '%s'\n", i+1, cat.Name, cat.Hiragana)
 	}
 }
 
@@ -228,7 +185,6 @@ func convertToHiragana(text string) string {
 	result = strings.ReplaceAll(result, "（", "")
 	result = strings.ReplaceAll(result, "）", "")
 
-	fmt.Printf("DEBUG: Converted '%s' -> '%s'\n", text, result)
 	return result
 }
 
@@ -276,11 +232,11 @@ func getMockCategories() []CategoryResponse {
 			Name:     "椅子",
 			Hiragana: "いす",
 			Items: []Item{
-				{ID: "pipe-chair", Name: "パイプ椅子", Price: 500, Category: "chairs"},
-				{ID: "office-chair", Name: "オフィスチェア", Price: 800, Category: "chairs"},
-				{ID: "sofa-1p", Name: "ソファー（1人掛け）", Price: 2000, Category: "chairs"},
-				{ID: "sofa-2p", Name: "ソファー（2人掛け）", Price: 3000, Category: "chairs"},
-				{ID: "sofa-3p", Name: "ソファー（3人掛け）", Price: 4000, Category: "chairs"},
+				{ID: "pipe-chair", Name: "パイプ椅子", Price: 500, Category: "chairs", Hiragana: "ぱいぷいす"},
+				{ID: "office-chair", Name: "オフィスチェア", Price: 800, Category: "chairs", Hiragana: "おふぃすちぇあ"},
+				{ID: "sofa-1p", Name: "ソファー（1人掛け）", Price: 2000, Category: "chairs", Hiragana: "そふぁーひとりがけ"},
+				{ID: "sofa-2p", Name: "ソファー（2人掛け）", Price: 3000, Category: "chairs", Hiragana: "そふぁーふたりがけ"},
+				{ID: "sofa-3p", Name: "ソファー（3人掛け）", Price: 4000, Category: "chairs", Hiragana: "そふぁーさんにんがけ"},
 			},
 		},
 		{
@@ -288,10 +244,10 @@ func getMockCategories() []CategoryResponse {
 			Name:     "机・テーブル",
 			Hiragana: "つくえてーぶる",
 			Items: []Item{
-				{ID: "work-desk", Name: "事務机", Price: 1500, Category: "tables"},
-				{ID: "dining-table", Name: "ダイニングテーブル", Price: 2500, Category: "tables"},
-				{ID: "coffee-table", Name: "コーヒーテーブル", Price: 1000, Category: "tables"},
-				{ID: "side-table", Name: "サイドテーブル", Price: 700, Category: "tables"},
+				{ID: "work-desk", Name: "事務机", Price: 1500, Category: "tables", Hiragana: "じむづくえ"},
+				{ID: "dining-table", Name: "ダイニングテーブル", Price: 2500, Category: "tables", Hiragana: "だいにんぐてーぶる"},
+				{ID: "coffee-table", Name: "コーヒーテーブル", Price: 1000, Category: "tables", Hiragana: "こーひーてーぶる"},
+				{ID: "side-table", Name: "サイドテーブル", Price: 700, Category: "tables", Hiragana: "さいどてーぶる"},
 			},
 		},
 		{
@@ -299,10 +255,10 @@ func getMockCategories() []CategoryResponse {
 			Name:     "タンス・収納",
 			Hiragana: "たんすしゅうのう",
 			Items: []Item{
-				{ID: "clothes-cabinet", Name: "洋服タンス", Price: 3000, Category: "cabinets"},
-				{ID: "bookshelf", Name: "本棚", Price: 1500, Category: "cabinets"},
-				{ID: "tv-stand", Name: "テレビ台", Price: 2000, Category: "cabinets"},
-				{ID: "chest", Name: "引き出し（4段）", Price: 2500, Category: "cabinets"},
+				{ID: "clothes-cabinet", Name: "洋服タンス", Price: 3000, Category: "cabinets", Hiragana: "ようふくたんす"},
+				{ID: "bookshelf", Name: "本棚", Price: 1500, Category: "cabinets", Hiragana: "ほんだな"},
+				{ID: "tv-stand", Name: "テレビ台", Price: 2000, Category: "cabinets", Hiragana: "てれびだい"},
+				{ID: "chest", Name: "引き出し（4段）", Price: 2500, Category: "cabinets", Hiragana: "ひきだしよんだん"},
 			},
 		},
 		{
@@ -310,10 +266,10 @@ func getMockCategories() []CategoryResponse {
 			Name:     "家電製品",
 			Hiragana: "かでんせいひん",
 			Items: []Item{
-				{ID: "tv", Name: "テレビ", Price: 3500, Category: "appliances"},
-				{ID: "refrigerator", Name: "冷蔵庫", Price: 5000, Category: "appliances"},
-				{ID: "washing-machine", Name: "洗濯機", Price: 4000, Category: "appliances"},
-				{ID: "microwave", Name: "電子レンジ", Price: 2000, Category: "appliances"},
+				{ID: "tv", Name: "テレビ", Price: 3500, Category: "appliances", Hiragana: "てれび"},
+				{ID: "refrigerator", Name: "冷蔵庫", Price: 5000, Category: "appliances", Hiragana: "れいぞうこ"},
+				{ID: "washing-machine", Name: "洗濯機", Price: 4000, Category: "appliances", Hiragana: "せんたくき"},
+				{ID: "microwave", Name: "電子レンジ", Price: 2000, Category: "appliances", Hiragana: "でんしれんじ"},
 			},
 		},
 		{
@@ -321,10 +277,10 @@ func getMockCategories() []CategoryResponse {
 			Name:     "ベッド・寝具",
 			Hiragana: "べっどしんぐ",
 			Items: []Item{
-				{ID: "single-bed", Name: "シングルベッド", Price: 3000, Category: "beds"},
-				{ID: "double-bed", Name: "ダブルベッド", Price: 4500, Category: "beds"},
-				{ID: "mattress", Name: "マットレス", Price: 2000, Category: "beds"},
-				{ID: "futon", Name: "布団", Price: 1500, Category: "beds"},
+				{ID: "single-bed", Name: "シングルベッド", Price: 3000, Category: "beds", Hiragana: "しんぐるべっど"},
+				{ID: "double-bed", Name: "ダブルベッド", Price: 4500, Category: "beds", Hiragana: "だぶるべっど"},
+				{ID: "mattress", Name: "マットレス", Price: 2000, Category: "beds", Hiragana: "まっとれす"},
+				{ID: "futon", Name: "布団", Price: 1500, Category: "beds", Hiragana: "ふとん"},
 			},
 		},
 		{
@@ -332,10 +288,10 @@ func getMockCategories() []CategoryResponse {
 			Name:     "その他",
 			Hiragana: "そのた",
 			Items: []Item{
-				{ID: "other-small", Name: "その他（小）", Price: 500, Category: "other"},
-				{ID: "other-medium", Name: "その他（中）", Price: 1500, Category: "other"},
-				{ID: "other-large", Name: "その他（大）", Price: 3000, Category: "other"},
-				{ID: "other-custom", Name: "その他（カスタム）", Price: 0, Category: "other"},
+				{ID: "other-small", Name: "その他（小）", Price: 500, Category: "other", Hiragana: "そのたしょう"},
+				{ID: "other-medium", Name: "その他（中）", Price: 1500, Category: "other", Hiragana: "そのたちゅう"},
+				{ID: "other-large", Name: "その他（大）", Price: 3000, Category: "other", Hiragana: "そのただい"},
+				{ID: "other-custom", Name: "その他（カスタム）", Price: 0, Category: "other", Hiragana: "そのたかすたむ"},
 			},
 		},
 	}
