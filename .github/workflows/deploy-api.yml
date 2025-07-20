@@ -94,12 +94,15 @@ jobs:
         working-directory: ./backend
         run: |
           IMAGE_TAG=${{ env.ARTIFACT_REGISTRY }}/${{ steps.env.outputs.SERVICE_NAME }}:${{ github.sha }}
-          docker build -t $IMAGE_TAG .
+          LATEST_TAG=${{ env.ARTIFACT_REGISTRY }}/${{ steps.env.outputs.SERVICE_NAME }}:latest
+          docker build -t $IMAGE_TAG -t $LATEST_TAG .
           echo "IMAGE_TAG=$IMAGE_TAG" >> $GITHUB_ENV
+          echo "LATEST_TAG=$LATEST_TAG" >> $GITHUB_ENV
 
       - name: Push Docker image
         run: |
           docker push ${{ env.IMAGE_TAG }}
+          docker push ${{ env.LATEST_TAG }}
 
       - name: Deploy to Cloud Run
         run: |
