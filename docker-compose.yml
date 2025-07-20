@@ -27,12 +27,21 @@ services:
       - PORT=8080
       - DATABASE_URL=postgres://user:password@postgres:5432/line_estimate?sslmode=disable
       - JWT_SECRET=your-super-secret-jwt-key-change-this-in-production
+      # Google Drive Configuration
+      - GOOGLE_SERVICE_ACCOUNT_KEY=/app/disposal-estimate-a107e828d351.json
+      - GOOGLE_DRIVE_FOLDER_ID=1X0IQJWG6Ss47skLDgH_xkJGRGXmuE7Kf
+      - SAVE_LOCAL_PDF=false
+      # SSL/TLS settings for Google API
+      - SSL_CERT_DIR=/etc/ssl/certs
+      - CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt
     depends_on:
       - postgres
     networks:
       - line-estimate-network
     volumes:
-      - ./backend:/app
+      - ./backend:/app:delegated
+      # Google Drive service account key file
+      - ./backend/disposal-estimate-a107e828d351.json:/app/disposal-estimate-a107e828d351.json:ro
 
   frontend:
     build:

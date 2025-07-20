@@ -77,9 +77,10 @@ func (ds *DriveService) UploadFile(fileName string, mimeType string, data []byte
 		driveFile.Parents = []string{folderID}
 	}
 
-	// ファイルをアップロード
+	// ファイルをアップロード（共有ドライブ対応）
 	uploadedFile, err := ds.service.Files.Create(driveFile).
 		Media(bytes.NewReader(data)).
+		SupportsAllDrives(true).
 		Do()
 	if err != nil {
 		return nil, fmt.Errorf("unable to upload file: %v", err)
@@ -93,6 +94,8 @@ func (ds *DriveService) ListFiles(pageSize int64) ([]*drive.File, error) {
 	r, err := ds.service.Files.List().
 		PageSize(pageSize).
 		Fields("nextPageToken, files(id, name, mimeType, createdTime)").
+		SupportsAllDrives(true).
+		IncludeItemsFromAllDrives(true).
 		Do()
 	if err != nil {
 		return nil, fmt.Errorf("unable to retrieve files: %v", err)
@@ -103,7 +106,9 @@ func (ds *DriveService) ListFiles(pageSize int64) ([]*drive.File, error) {
 
 // DeleteFile deletes a file from Google Drive
 func (ds *DriveService) DeleteFile(fileID string) error {
-	err := ds.service.Files.Delete(fileID).Do()
+	err := ds.service.Files.Delete(fileID).
+		SupportsAllDrives(true).
+		Do()
 	if err != nil {
 		return fmt.Errorf("unable to delete file: %v", err)
 	}
@@ -114,6 +119,7 @@ func (ds *DriveService) DeleteFile(fileID string) error {
 func (ds *DriveService) GetFileInfo(fileID string) (*drive.File, error) {
 	file, err := ds.service.Files.Get(fileID).
 		Fields("id, name, mimeType, size, createdTime, modifiedTime").
+		SupportsAllDrives(true).
 		Do()
 	if err != nil {
 		return nil, fmt.Errorf("unable to get file info: %v", err)
@@ -133,7 +139,9 @@ func (ds *DriveService) CreateFolder(folderName string, parentFolderID string) (
 		folder.Parents = []string{parentFolderID}
 	}
 
-	createdFolder, err := ds.service.Files.Create(folder).Do()
+	createdFolder, err := ds.service.Files.Create(folder).
+		SupportsAllDrives(true).
+		Do()
 	if err != nil {
 		return nil, fmt.Errorf("unable to create folder: %v", err)
 	}
