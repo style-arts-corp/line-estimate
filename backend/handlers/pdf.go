@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"bytes"
+	_ "embed"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -14,34 +15,17 @@ import (
 	"line-estimate-backend/utils"
 )
 
+//go:embed NotoSansJP-Regular.ttf
+var notoSansJPFont []byte
+
 // loadJapaneseFont loads Japanese font for PDF
 func loadJapaneseFont(pdf *gopdf.GoPdf) error {
-	// Get current working directory for debugging
-	cwd, _ := os.Getwd()
-
-	// Try multiple font paths
-	fontPaths := []string{
-		"./fonts/NotoSansJP-Regular.ttf",
-		"fonts/NotoSansJP-Regular.ttf",
-		filepath.Join(cwd, "fonts", "NotoSansJP-Regular.ttf"),
-		"/app/fonts/NotoSansJP-Regular.ttf", // Docker path
-	}
-
-	var fontErr error
-	for _, path := range fontPaths {
-		if _, err := os.Stat(path); err == nil {
-			// Font file exists, try to add it
-			fontErr = pdf.AddTTFFont("noto-sans", path)
-			if fontErr == nil {
-				return nil
-			}
-		}
-	}
-
+	// Use embedded font
+	fontErr := pdf.AddTTFFontData("noto-sans", notoSansJPFont)
 	if fontErr != nil {
-		return fmt.Errorf("font loading failed: %v", fontErr)
+		return fmt.Errorf("embedded font loading failed: %v", fontErr)
 	}
-	return fmt.Errorf("no font file found")
+	return nil
 }
 
 // GenerateEstimatePDF generates an estimate PDF from the provided data
