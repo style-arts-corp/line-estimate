@@ -4,7 +4,6 @@ import (
 	"net/http"
 	"os"
 	"strconv"
-	"strings"
 
 	"line-estimate-backend/utils"
 
@@ -53,7 +52,14 @@ func GetCategories(c *gin.Context) {
 	}
 
 	if sort {
-		sortItemsInHiraganaOrder(categories)
+		// Create flat list of all items sorted by hiragana
+		allItems := sortAllItemsByHiragana(categories)
+		utils.SuccessResponse(c, gin.H{
+			"items":  allItems,
+			"source": getDataSource(useGoogleSheets),
+			"sorted": sort,
+		})
+		return // End function execution here when sort=true
 	}
 
 	utils.SuccessResponse(c, gin.H{
@@ -61,6 +67,7 @@ func GetCategories(c *gin.Context) {
 		"source":     getDataSource(useGoogleSheets),
 		"sorted":     sort,
 	})
+
 }
 
 // fetchCategoriesFromGoogleSheets fetches data from Google Sheets
@@ -128,7 +135,7 @@ func transformRowsToCategories(rows [][]string) []CategoryResponse {
 		categoryName := row[1]
 		itemID := row[2]
 		itemName := row[3]
-		itemNameHiragana := row[4] // Column E - hiragana (for items)
+		itemNameHiragana := row[4]       // Column E - hiragana (for items)
 		price, _ := strconv.Atoi(row[5]) // Parse price from column F
 
 		// Get or create category
@@ -137,7 +144,7 @@ func transformRowsToCategories(rows [][]string) []CategoryResponse {
 				ID:       categoryID,
 				Name:     categoryName,
 				Items:    []Item{},
-				Hiragana: convertToHiragana(categoryName), // Convert category name to hiragana
+				Hiragana: categoryName, // Category name for reference (not used for sorting)
 			}
 		}
 
@@ -160,68 +167,24 @@ func transformRowsToCategories(rows [][]string) []CategoryResponse {
 	return categories
 }
 
-// sortItemsInHiraganaOrder sorts items within each category by Japanese hiragana reading order
-func sortItemsInHiraganaOrder(categories []CategoryResponse) {
-	// Sort items within each category by hiragana reading from column E
-	for i := range categories {
-		items := categories[i].Items
-		for j := 0; j < len(items)-1; j++ {
-			for k := j + 1; k < len(items); k++ {
-				if items[j].Hiragana > items[k].Hiragana {
-					items[j], items[k] = items[k], items[j]
-				}
+// sortAllItemsByHiragana collects all items from all categories and sorts them by hiragana
+func sortAllItemsByHiragana(categories []CategoryResponse) []Item {
+	// Collect all items from all categories
+	var allItems []Item
+	for _, category := range categories {
+		allItems = append(allItems, category.Items...)
+	}
+
+	// Sort all items by hiragana using bubble sort
+	for i := 0; i < len(allItems)-1; i++ {
+		for j := i + 1; j < len(allItems); j++ {
+			if allItems[i].Hiragana > allItems[j].Hiragana {
+				allItems[i], allItems[j] = allItems[j], allItems[i]
 			}
 		}
 	}
-}
 
-// convertToHiragana converts Japanese text (kanji/katakana) to hiragana for sorting
-func convertToHiragana(text string) string {
-	// Convert katakana to hiragana
-	hiraganaText := katakanaToHiragana(text)
-
-	// Remove dots and special characters that might affect sorting
-	result := strings.ReplaceAll(hiraganaText, "・", "")
-	result = strings.ReplaceAll(result, "（", "")
-	result = strings.ReplaceAll(result, "）", "")
-
-	return result
-}
-
-// katakanaToHiragana converts katakana characters to hiragana
-func katakanaToHiragana(text string) string {
-	// Katakana to Hiragana mapping
-	katakanaMap := map[rune]rune{
-		'ア': 'あ', 'イ': 'い', 'ウ': 'う', 'エ': 'え', 'オ': 'お',
-		'カ': 'か', 'キ': 'き', 'ク': 'く', 'ケ': 'け', 'コ': 'こ',
-		'サ': 'さ', 'シ': 'し', 'ス': 'す', 'セ': 'せ', 'ソ': 'そ',
-		'タ': 'た', 'チ': 'ち', 'ツ': 'つ', 'テ': 'て', 'ト': 'と',
-		'ナ': 'な', 'ニ': 'に', 'ヌ': 'ぬ', 'ネ': 'ね', 'ノ': 'の',
-		'ハ': 'は', 'ヒ': 'ひ', 'フ': 'ふ', 'ヘ': 'へ', 'ホ': 'ほ',
-		'マ': 'ま', 'ミ': 'み', 'ム': 'む', 'メ': 'め', 'モ': 'も',
-		'ヤ': 'や', 'ユ': 'ゆ', 'ヨ': 'よ',
-		'ラ': 'ら', 'リ': 'り', 'ル': 'る', 'レ': 'れ', 'ロ': 'ろ',
-		'ワ': 'わ', 'ヲ': 'を', 'ン': 'ん',
-		'ガ': 'が', 'ギ': 'ぎ', 'グ': 'ぐ', 'ゲ': 'げ', 'ゴ': 'ご',
-		'ザ': 'ざ', 'ジ': 'じ', 'ズ': 'ず', 'ゼ': 'ぜ', 'ゾ': 'ぞ',
-		'ダ': 'だ', 'ヂ': 'ぢ', 'ヅ': 'づ', 'デ': 'で', 'ド': 'ど',
-		'バ': 'ば', 'ビ': 'び', 'ブ': 'ぶ', 'ベ': 'べ', 'ボ': 'ぼ',
-		'パ': 'ぱ', 'ピ': 'ぴ', 'プ': 'ぷ', 'ペ': 'ぺ', 'ポ': 'ぽ',
-		'ャ': 'ゃ', 'ュ': 'ゅ', 'ョ': 'ょ',
-		'ッ': 'っ',
-		'ー': 'ー', // Long vowel mark stays the same
-	}
-
-	result := make([]rune, 0, len(text))
-	for _, r := range text {
-		if hiragana, exists := katakanaMap[r]; exists {
-			result = append(result, hiragana)
-		} else {
-			result = append(result, r)
-		}
-	}
-
-	return string(result)
+	return allItems
 }
 
 // getMockCategories returns mock data for development
