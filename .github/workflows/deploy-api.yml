@@ -73,6 +73,9 @@ jobs:
       - name: Determine environment and service name
         id: env
         run: |
+          # ブランチ名から refs/heads/ を除去し、特殊文字をハイフンに置換
+          BRANCH_NAME=$(echo "${{ github.ref }}" | sed 's|refs/heads/||' | sed 's|[^a-zA-Z0-9]|-|g' | tr '[:upper:]' '[:lower:]')
+          
           if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
             echo "ENV=prod" >> $GITHUB_OUTPUT
             echo "SERVICE_NAME=disposal-estimate-api" >> $GITHUB_OUTPUT
@@ -80,6 +83,10 @@ jobs:
           elif [[ "${{ github.ref }}" == "refs/heads/develop" ]]; then
             echo "ENV=dev" >> $GITHUB_OUTPUT
             echo "SERVICE_NAME=disposal-estimate-api-dev" >> $GITHUB_OUTPUT
+            echo "GIN_MODE=debug" >> $GITHUB_OUTPUT
+          else
+            echo "ENV=feature" >> $GITHUB_OUTPUT
+            echo "SERVICE_NAME=disposal-estimate-api-${BRANCH_NAME}" >> $GITHUB_OUTPUT
             echo "GIN_MODE=debug" >> $GITHUB_OUTPUT
           fi
 
