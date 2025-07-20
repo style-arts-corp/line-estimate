@@ -15,10 +15,10 @@ func SetupPDFRoutes(r *gin.Engine) {
 		{
 			// テスト用PDF生成（GET /api/pdf/test）
 			pdf.POST("/test", handlers.CreatePDF)
-			
+
 			// 見積書PDF生成（POST /api/pdf/estimate）
 			pdf.POST("/estimate", handlers.CreateEstimatePDF)
-			
+
 			// 作業指示書PDF生成（POST /api/pdf/instruction）
 			pdf.POST("/instruction", handlers.CreateInstructionPDF)
 		}
