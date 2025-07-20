@@ -47,12 +47,17 @@ resource "google_cloud_run_v2_service" "disposal_estimate_api" {
         }
       }
 
-      # Google Drive folder ID (optional)
+      # Google Drive folder ID from Secret Manager
       dynamic "env" {
-        for_each = var.google_drive_folder_id != "" ? [1] : []
+        for_each = var.google_drive_folder_id_secret_id != "" ? [1] : []
         content {
-          name  = "GOOGLE_DRIVE_FOLDER_ID"
-          value = var.google_drive_folder_id
+          name = "GOOGLE_DRIVE_FOLDER_ID"
+          value_source {
+            secret_key_ref {
+              secret  = var.google_drive_folder_id_secret_id
+              version = "latest"
+            }
+          }
         }
       }
 
