@@ -5,15 +5,17 @@ import (
 	"os"
 	"strconv"
 
-	"github.com/gin-gonic/gin"
 	"line-estimate-backend/utils"
+
+	"github.com/gin-gonic/gin"
 )
 
 // Category represents a category with items
 type CategoryResponse struct {
-	ID    string `json:"id"`
-	Name  string `json:"name"`
-	Items []Item `json:"items"`
+	ID       string `json:"id"`
+	Name     string `json:"name"`
+	Items    []Item `json:"items"`
+	Hiragana string `json:"-"` // Internal field for sorting, not exposed in JSON
 }
 
 // Item represents an item within a category
@@ -22,12 +24,13 @@ type Item struct {
 	Name     string `json:"name"`
 	Price    int    `json:"price"`
 	Category string `json:"category"`
+	Hiragana string `json:"-"` // Internal field for sorting, not exposed in JSON
 }
 
 // GetCategories handles fetching categories based on environment
 func GetCategories(c *gin.Context) {
 	// Check if sort parameter is provided
-	sortDesc := c.DefaultQuery("sort", "false") == "true"
+	sort := c.DefaultQuery("sort", "false") == "true"
 
 	// Determine data source based on environment
 	env := os.Getenv("GO_ENV")
@@ -44,19 +47,27 @@ func GetCategories(c *gin.Context) {
 			categories = getMockCategories()
 		}
 	} else {
+		// Use mock data for development
 		categories = getMockCategories()
 	}
 
-	// Sort if requested
-	if sortDesc {
-		categories = sortCategoriesDescending(categories)
+	if sort {
+		// Create flat list of all items sorted by hiragana
+		allItems := sortAllItemsByHiragana(categories)
+		utils.SuccessResponse(c, gin.H{
+			"items":  allItems,
+			"source": getDataSource(useGoogleSheets),
+			"sorted": sort,
+		})
+		return // End function execution here when sort=true
 	}
 
 	utils.SuccessResponse(c, gin.H{
 		"categories": categories,
 		"source":     getDataSource(useGoogleSheets),
-		"sorted":     sortDesc,
+		"sorted":     sort,
 	})
+
 }
 
 // fetchCategoriesFromGoogleSheets fetches data from Google Sheets
@@ -74,7 +85,7 @@ func fetchCategoriesFromGoogleSheets() ([]CategoryResponse, error) {
 	}
 
 	// Make HTTP request to Google Sheets API
-	url := "https://sheets.googleapis.com/v4/spreadsheets/" + spreadsheetID + "/values/Sheet1!A2:E?key=" + apiKey
+	url := "https://sheets.googleapis.com/v4/spreadsheets/" + spreadsheetID + "/values/categories_data!A1:F?key=" + apiKey
 
 	resp, err := http.Get(url)
 	if err != nil {
@@ -99,8 +110,16 @@ func fetchCategoriesFromGoogleSheets() ([]CategoryResponse, error) {
 		return nil, err
 	}
 
+	// Skip header row (first row) for data processing
+	dataRows := data.Values
+	if len(dataRows) > 0 {
+		dataRows = dataRows[1:] // Remove header row
+	}
+
 	// Transform data to categories
-	return transformRowsToCategories(data.Values), nil
+	categories := transformRowsToCategories(dataRows)
+
+	return categories, nil
 }
 
 // transformRowsToCategories transforms Google Sheets rows to categories
@@ -108,7 +127,7 @@ func transformRowsToCategories(rows [][]string) []CategoryResponse {
 	categoryMap := make(map[string]*CategoryResponse)
 
 	for _, row := range rows {
-		if len(row) < 5 {
+		if len(row) < 6 { // Expecting 6 columns
 			continue
 		}
 
@@ -116,14 +135,16 @@ func transformRowsToCategories(rows [][]string) []CategoryResponse {
 		categoryName := row[1]
 		itemID := row[2]
 		itemName := row[3]
-		price, _ := strconv.Atoi(row[4])
+		itemNameHiragana := row[4]       // Column E - hiragana (for items)
+		price, _ := strconv.Atoi(row[5]) // Parse price from column F
 
 		// Get or create category
 		if _, exists := categoryMap[categoryID]; !exists {
 			categoryMap[categoryID] = &CategoryResponse{
-				ID:    categoryID,
-				Name:  categoryName,
-				Items: []Item{},
+				ID:       categoryID,
+				Name:     categoryName,
+				Items:    []Item{},
+				Hiragana: categoryName, // Category name for reference (not used for sorting)
 			}
 		}
 
@@ -133,6 +154,7 @@ func transformRowsToCategories(rows [][]string) []CategoryResponse {
 			Name:     itemName,
 			Price:    price,
 			Category: categoryID,
+			Hiragana: itemNameHiragana, // Use hiragana from column E
 		})
 	}
 
@@ -145,97 +167,97 @@ func transformRowsToCategories(rows [][]string) []CategoryResponse {
 	return categories
 }
 
-// getMockCategories returns mock data for development
-func getMockCategories() []CategoryResponse {
-	return []CategoryResponse{
-		{
-			ID:   "chairs",
-			Name: "椅子",
-			Items: []Item{
-				{ID: "pipe-chair", Name: "パイプ椅子", Price: 500, Category: "chairs"},
-				{ID: "office-chair", Name: "オフィスチェア", Price: 800, Category: "chairs"},
-				{ID: "sofa-1p", Name: "ソファー（1人掛け）", Price: 2000, Category: "chairs"},
-				{ID: "sofa-2p", Name: "ソファー（2人掛け）", Price: 3000, Category: "chairs"},
-				{ID: "sofa-3p", Name: "ソファー（3人掛け）", Price: 4000, Category: "chairs"},
-			},
-		},
-		{
-			ID:   "tables",
-			Name: "机・テーブル",
-			Items: []Item{
-				{ID: "work-desk", Name: "事務机", Price: 1500, Category: "tables"},
-				{ID: "dining-table", Name: "ダイニングテーブル", Price: 2500, Category: "tables"},
-				{ID: "coffee-table", Name: "コーヒーテーブル", Price: 1000, Category: "tables"},
-				{ID: "side-table", Name: "サイドテーブル", Price: 700, Category: "tables"},
-			},
-		},
-		{
-			ID:   "cabinets",
-			Name: "タンス・収納",
-			Items: []Item{
-				{ID: "clothes-cabinet", Name: "洋服タンス", Price: 3000, Category: "cabinets"},
-				{ID: "bookshelf", Name: "本棚", Price: 1500, Category: "cabinets"},
-				{ID: "tv-stand", Name: "テレビ台", Price: 2000, Category: "cabinets"},
-				{ID: "chest", Name: "引き出し（4段）", Price: 2500, Category: "cabinets"},
-			},
-		},
-		{
-			ID:   "appliances",
-			Name: "家電製品",
-			Items: []Item{
-				{ID: "tv", Name: "テレビ", Price: 3500, Category: "appliances"},
-				{ID: "refrigerator", Name: "冷蔵庫", Price: 5000, Category: "appliances"},
-				{ID: "washing-machine", Name: "洗濯機", Price: 4000, Category: "appliances"},
-				{ID: "microwave", Name: "電子レンジ", Price: 2000, Category: "appliances"},
-			},
-		},
-		{
-			ID:   "beds",
-			Name: "ベッド・寝具",
-			Items: []Item{
-				{ID: "single-bed", Name: "シングルベッド", Price: 3000, Category: "beds"},
-				{ID: "double-bed", Name: "ダブルベッド", Price: 4500, Category: "beds"},
-				{ID: "mattress", Name: "マットレス", Price: 2000, Category: "beds"},
-				{ID: "futon", Name: "布団", Price: 1500, Category: "beds"},
-			},
-		},
-		{
-			ID:   "other",
-			Name: "その他",
-			Items: []Item{
-				{ID: "other-small", Name: "その他（小）", Price: 500, Category: "other"},
-				{ID: "other-medium", Name: "その他（中）", Price: 1500, Category: "other"},
-				{ID: "other-large", Name: "その他（大）", Price: 3000, Category: "other"},
-				{ID: "other-custom", Name: "その他（カスタム）", Price: 0, Category: "other"},
-			},
-		},
+// sortAllItemsByHiragana collects all items from all categories and sorts them by hiragana
+func sortAllItemsByHiragana(categories []CategoryResponse) []Item {
+	// Collect all items from all categories
+	var allItems []Item
+	for _, category := range categories {
+		allItems = append(allItems, category.Items...)
 	}
-}
 
-// sortCategoriesDescending sorts items within each category by price (high to low)
-func sortCategoriesDescending(categories []CategoryResponse) []CategoryResponse {
-	result := make([]CategoryResponse, len(categories))
-
-	for i, category := range categories {
-		result[i] = CategoryResponse{
-			ID:    category.ID,
-			Name:  category.Name,
-			Items: make([]Item, len(category.Items)),
-		}
-
-		copy(result[i].Items, category.Items)
-
-		// Sort items by price (descending)
-		for j := 0; j < len(result[i].Items)-1; j++ {
-			for k := j + 1; k < len(result[i].Items); k++ {
-				if result[i].Items[j].Price < result[i].Items[k].Price {
-					result[i].Items[j], result[i].Items[k] = result[i].Items[k], result[i].Items[j]
-				}
+	// Sort all items by hiragana using bubble sort
+	for i := 0; i < len(allItems)-1; i++ {
+		for j := i + 1; j < len(allItems); j++ {
+			if allItems[i].Hiragana > allItems[j].Hiragana {
+				allItems[i], allItems[j] = allItems[j], allItems[i]
 			}
 		}
 	}
 
-	return result
+	return allItems
+}
+
+// getMockCategories returns mock data for development
+func getMockCategories() []CategoryResponse {
+	return []CategoryResponse{
+		{
+			ID:       "chairs",
+			Name:     "椅子",
+			Hiragana: "いす",
+			Items: []Item{
+				{ID: "pipe-chair", Name: "パイプ椅子", Price: 500, Category: "chairs", Hiragana: "ぱいぷいす"},
+				{ID: "office-chair", Name: "オフィスチェア", Price: 800, Category: "chairs", Hiragana: "おふぃすちぇあ"},
+				{ID: "sofa-1p", Name: "ソファー（1人掛け）", Price: 2000, Category: "chairs", Hiragana: "そふぁーひとりがけ"},
+				{ID: "sofa-2p", Name: "ソファー（2人掛け）", Price: 3000, Category: "chairs", Hiragana: "そふぁーふたりがけ"},
+				{ID: "sofa-3p", Name: "ソファー（3人掛け）", Price: 4000, Category: "chairs", Hiragana: "そふぁーさんにんがけ"},
+			},
+		},
+		{
+			ID:       "tables",
+			Name:     "机・テーブル",
+			Hiragana: "つくえてーぶる",
+			Items: []Item{
+				{ID: "work-desk", Name: "事務机", Price: 1500, Category: "tables", Hiragana: "じむづくえ"},
+				{ID: "dining-table", Name: "ダイニングテーブル", Price: 2500, Category: "tables", Hiragana: "だいにんぐてーぶる"},
+				{ID: "coffee-table", Name: "コーヒーテーブル", Price: 1000, Category: "tables", Hiragana: "こーひーてーぶる"},
+				{ID: "side-table", Name: "サイドテーブル", Price: 700, Category: "tables", Hiragana: "さいどてーぶる"},
+			},
+		},
+		{
+			ID:       "cabinets",
+			Name:     "タンス・収納",
+			Hiragana: "たんすしゅうのう",
+			Items: []Item{
+				{ID: "clothes-cabinet", Name: "洋服タンス", Price: 3000, Category: "cabinets", Hiragana: "ようふくたんす"},
+				{ID: "bookshelf", Name: "本棚", Price: 1500, Category: "cabinets", Hiragana: "ほんだな"},
+				{ID: "tv-stand", Name: "テレビ台", Price: 2000, Category: "cabinets", Hiragana: "てれびだい"},
+				{ID: "chest", Name: "引き出し（4段）", Price: 2500, Category: "cabinets", Hiragana: "ひきだしよんだん"},
+			},
+		},
+		{
+			ID:       "appliances",
+			Name:     "家電製品",
+			Hiragana: "かでんせいひん",
+			Items: []Item{
+				{ID: "tv", Name: "テレビ", Price: 3500, Category: "appliances", Hiragana: "てれび"},
+				{ID: "refrigerator", Name: "冷蔵庫", Price: 5000, Category: "appliances", Hiragana: "れいぞうこ"},
+				{ID: "washing-machine", Name: "洗濯機", Price: 4000, Category: "appliances", Hiragana: "せんたくき"},
+				{ID: "microwave", Name: "電子レンジ", Price: 2000, Category: "appliances", Hiragana: "でんしれんじ"},
+			},
+		},
+		{
+			ID:       "beds",
+			Name:     "ベッド・寝具",
+			Hiragana: "べっどしんぐ",
+			Items: []Item{
+				{ID: "single-bed", Name: "シングルベッド", Price: 3000, Category: "beds", Hiragana: "しんぐるべっど"},
+				{ID: "double-bed", Name: "ダブルベッド", Price: 4500, Category: "beds", Hiragana: "だぶるべっど"},
+				{ID: "mattress", Name: "マットレス", Price: 2000, Category: "beds", Hiragana: "まっとれす"},
+				{ID: "futon", Name: "布団", Price: 1500, Category: "beds", Hiragana: "ふとん"},
+			},
+		},
+		{
+			ID:       "other",
+			Name:     "その他",
+			Hiragana: "そのた",
+			Items: []Item{
+				{ID: "other-small", Name: "その他（小）", Price: 500, Category: "other", Hiragana: "そのたしょう"},
+				{ID: "other-medium", Name: "その他（中）", Price: 1500, Category: "other", Hiragana: "そのたちゅう"},
+				{ID: "other-large", Name: "その他（大）", Price: 3000, Category: "other", Hiragana: "そのただい"},
+				{ID: "other-custom", Name: "その他（カスタム）", Price: 0, Category: "other", Hiragana: "そのたかすたむ"},
+			},
+		},
+	}
 }
 
 // getDataSource returns the data source string for response
