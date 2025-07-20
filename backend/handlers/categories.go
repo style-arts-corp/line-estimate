@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	"strings"
 
 	"line-estimate-backend/utils"
 
@@ -13,9 +14,10 @@ import (
 
 // Category represents a category with items
 type CategoryResponse struct {
-	ID    string `json:"id"`
-	Name  string `json:"name"`
-	Items []Item `json:"items"`
+	ID       string `json:"id"`
+	Name     string `json:"name"`
+	Items    []Item `json:"items"`
+	Hiragana string `json:"-"` // Internal field for sorting, not exposed in JSON
 }
 
 // Item represents an item within a category
@@ -29,7 +31,7 @@ type Item struct {
 // GetCategories handles fetching categories based on environment
 func GetCategories(c *gin.Context) {
 	// Check if sort parameter is provided
-	sortDesc := c.DefaultQuery("sort", "false") == "true"
+	sort := c.DefaultQuery("sort", "false") == "true"
 
 	// Determine data source based on environment
 	env := os.Getenv("GO_ENV")
@@ -47,19 +49,18 @@ func GetCategories(c *gin.Context) {
 			categories, err = fetchCategoriesFromGoogleSheets()
 		}
 	} else {
-		// categories = getMockCategories()
-		categories, err = fetchCategoriesFromGoogleSheets()
+		// Use mock data for development
+		categories = getMockCategories()
 	}
 
-	// Sort if requested
-	if sortDesc {
-		categories = sortCategoriesDescending(categories)
+	if sort {
+		sortCategoriesInHiraganaOrder(categories)
 	}
 
 	utils.SuccessResponse(c, gin.H{
 		"categories": categories,
 		"source":     getDataSource(useGoogleSheets),
-		"sorted":     sortDesc,
+		"sorted":     sort,
 	})
 }
 
@@ -82,7 +83,7 @@ func fetchCategoriesFromGoogleSheets() ([]CategoryResponse, error) {
 	}
 
 	// Make HTTP request to Google Sheets API
-	url := "https://sheets.googleapis.com/v4/spreadsheets/" + spreadsheetID + "/values/categories_data!A2:E?key=" + apiKey
+	url := "https://sheets.googleapis.com/v4/spreadsheets/" + spreadsheetID + "/values/categories_data!A1:F?key=" + apiKey
 	fmt.Printf("DEBUG: Request URL: %s\n", url)
 
 	resp, err := http.Get(url)
@@ -119,11 +120,21 @@ func fetchCategoriesFromGoogleSheets() ([]CategoryResponse, error) {
 
 	fmt.Printf("DEBUG: Received %d rows from Google Sheets\n", len(data.Values))
 	if len(data.Values) > 0 {
-		fmt.Printf("DEBUG: First row example: %v\n", data.Values[0])
+		fmt.Printf("DEBUG: Headers: %v\n", data.Values[0])
+		if len(data.Values) > 1 {
+			fmt.Printf("DEBUG: First data row example: %v\n", data.Values[1])
+			fmt.Printf("DEBUG: Column mapping - F(price): %s\n", data.Values[1][5])
+		}
+	}
+
+	// Skip header row (first row) for data processing
+	dataRows := data.Values
+	if len(dataRows) > 0 {
+		dataRows = dataRows[1:] // Remove header row
 	}
 
 	// Transform data to categories
-	categories := transformRowsToCategories(data.Values)
+	categories := transformRowsToCategories(dataRows)
 	fmt.Printf("DEBUG: Transformed to %d categories\n", len(categories))
 
 	return categories, nil
@@ -132,9 +143,10 @@ func fetchCategoriesFromGoogleSheets() ([]CategoryResponse, error) {
 // transformRowsToCategories transforms Google Sheets rows to categories
 func transformRowsToCategories(rows [][]string) []CategoryResponse {
 	categoryMap := make(map[string]*CategoryResponse)
+	categoryHiraganaMap := make(map[string]string) // Track hiragana for each category
 
 	for _, row := range rows {
-		if len(row) < 5 {
+		if len(row) < 6 { // Expecting 6 columns
 			continue
 		}
 
@@ -142,14 +154,22 @@ func transformRowsToCategories(rows [][]string) []CategoryResponse {
 		categoryName := row[1]
 		itemID := row[2]
 		itemName := row[3]
-		price, _ := strconv.Atoi(row[4])
+		// itemNameHiragana := row[4] // Column E - hiragana (for items)
+		price, _ := strconv.Atoi(row[5]) // Parse price from column F
+
+		// Extract category hiragana from category name using our conversion function
+		if _, exists := categoryHiraganaMap[categoryID]; !exists {
+			categoryHiragana := convertToHiragana(categoryName)
+			categoryHiraganaMap[categoryID] = categoryHiragana
+		}
 
 		// Get or create category
 		if _, exists := categoryMap[categoryID]; !exists {
 			categoryMap[categoryID] = &CategoryResponse{
-				ID:    categoryID,
-				Name:  categoryName,
-				Items: []Item{},
+				ID:       categoryID,
+				Name:     categoryName,
+				Items:    []Item{},
+				Hiragana: categoryHiraganaMap[categoryID],
 			}
 		}
 
@@ -168,15 +188,93 @@ func transformRowsToCategories(rows [][]string) []CategoryResponse {
 		categories = append(categories, *category)
 	}
 
+	// Sort by Japanese hiragana order using stored hiragana
+	sortCategoriesInHiraganaOrder(categories)
+
 	return categories
+}
+
+// sortCategoriesInHiraganaOrder sorts categories by Japanese hiragana reading order
+func sortCategoriesInHiraganaOrder(categories []CategoryResponse) {
+	// Debug: Print hiragana values before sorting
+	fmt.Printf("DEBUG: Before hiragana sorting:\n")
+	for i, cat := range categories {
+		fmt.Printf("  %d. %s -> '%s'\n", i+1, cat.Name, cat.Hiragana)
+	}
+
+	// Sort by hiragana reading using stored hiragana field
+	for i := 0; i < len(categories)-1; i++ {
+		for j := i + 1; j < len(categories); j++ {
+			if categories[i].Hiragana > categories[j].Hiragana {
+				categories[i], categories[j] = categories[j], categories[i]
+			}
+		}
+	}
+
+	// Debug: Print hiragana values after sorting
+	fmt.Printf("DEBUG: After hiragana sorting:\n")
+	for i, cat := range categories {
+		fmt.Printf("  %d. %s -> '%s'\n", i+1, cat.Name, cat.Hiragana)
+	}
+}
+
+// convertToHiragana converts Japanese text (kanji/katakana) to hiragana for sorting
+func convertToHiragana(text string) string {
+	// Convert katakana to hiragana
+	hiraganaText := katakanaToHiragana(text)
+
+	// Remove dots and special characters that might affect sorting
+	result := strings.ReplaceAll(hiraganaText, "・", "")
+	result = strings.ReplaceAll(result, "（", "")
+	result = strings.ReplaceAll(result, "）", "")
+
+	fmt.Printf("DEBUG: Converted '%s' -> '%s'\n", text, result)
+	return result
+}
+
+// katakanaToHiragana converts katakana characters to hiragana
+func katakanaToHiragana(text string) string {
+	// Katakana to Hiragana mapping
+	katakanaMap := map[rune]rune{
+		'ア': 'あ', 'イ': 'い', 'ウ': 'う', 'エ': 'え', 'オ': 'お',
+		'カ': 'か', 'キ': 'き', 'ク': 'く', 'ケ': 'け', 'コ': 'こ',
+		'サ': 'さ', 'シ': 'し', 'ス': 'す', 'セ': 'せ', 'ソ': 'そ',
+		'タ': 'た', 'チ': 'ち', 'ツ': 'つ', 'テ': 'て', 'ト': 'と',
+		'ナ': 'な', 'ニ': 'に', 'ヌ': 'ぬ', 'ネ': 'ね', 'ノ': 'の',
+		'ハ': 'は', 'ヒ': 'ひ', 'フ': 'ふ', 'ヘ': 'へ', 'ホ': 'ほ',
+		'マ': 'ま', 'ミ': 'み', 'ム': 'む', 'メ': 'め', 'モ': 'も',
+		'ヤ': 'や', 'ユ': 'ゆ', 'ヨ': 'よ',
+		'ラ': 'ら', 'リ': 'り', 'ル': 'る', 'レ': 'れ', 'ロ': 'ろ',
+		'ワ': 'わ', 'ヲ': 'を', 'ン': 'ん',
+		'ガ': 'が', 'ギ': 'ぎ', 'グ': 'ぐ', 'ゲ': 'げ', 'ゴ': 'ご',
+		'ザ': 'ざ', 'ジ': 'じ', 'ズ': 'ず', 'ゼ': 'ぜ', 'ゾ': 'ぞ',
+		'ダ': 'だ', 'ヂ': 'ぢ', 'ヅ': 'づ', 'デ': 'で', 'ド': 'ど',
+		'バ': 'ば', 'ビ': 'び', 'ブ': 'ぶ', 'ベ': 'べ', 'ボ': 'ぼ',
+		'パ': 'ぱ', 'ピ': 'ぴ', 'プ': 'ぷ', 'ペ': 'ぺ', 'ポ': 'ぽ',
+		'ャ': 'ゃ', 'ュ': 'ゅ', 'ョ': 'ょ',
+		'ッ': 'っ',
+		'ー': 'ー', // Long vowel mark stays the same
+	}
+
+	result := make([]rune, 0, len(text))
+	for _, r := range text {
+		if hiragana, exists := katakanaMap[r]; exists {
+			result = append(result, hiragana)
+		} else {
+			result = append(result, r)
+		}
+	}
+
+	return string(result)
 }
 
 // getMockCategories returns mock data for development
 func getMockCategories() []CategoryResponse {
 	return []CategoryResponse{
 		{
-			ID:   "chairs",
-			Name: "椅子",
+			ID:       "chairs",
+			Name:     "椅子",
+			Hiragana: "いす",
 			Items: []Item{
 				{ID: "pipe-chair", Name: "パイプ椅子", Price: 500, Category: "chairs"},
 				{ID: "office-chair", Name: "オフィスチェア", Price: 800, Category: "chairs"},
@@ -186,8 +284,9 @@ func getMockCategories() []CategoryResponse {
 			},
 		},
 		{
-			ID:   "tables",
-			Name: "机・テーブル",
+			ID:       "tables",
+			Name:     "机・テーブル",
+			Hiragana: "つくえてーぶる",
 			Items: []Item{
 				{ID: "work-desk", Name: "事務机", Price: 1500, Category: "tables"},
 				{ID: "dining-table", Name: "ダイニングテーブル", Price: 2500, Category: "tables"},
@@ -196,8 +295,9 @@ func getMockCategories() []CategoryResponse {
 			},
 		},
 		{
-			ID:   "cabinets",
-			Name: "タンス・収納",
+			ID:       "cabinets",
+			Name:     "タンス・収納",
+			Hiragana: "たんすしゅうのう",
 			Items: []Item{
 				{ID: "clothes-cabinet", Name: "洋服タンス", Price: 3000, Category: "cabinets"},
 				{ID: "bookshelf", Name: "本棚", Price: 1500, Category: "cabinets"},
@@ -206,8 +306,9 @@ func getMockCategories() []CategoryResponse {
 			},
 		},
 		{
-			ID:   "appliances",
-			Name: "家電製品",
+			ID:       "appliances",
+			Name:     "家電製品",
+			Hiragana: "かでんせいひん",
 			Items: []Item{
 				{ID: "tv", Name: "テレビ", Price: 3500, Category: "appliances"},
 				{ID: "refrigerator", Name: "冷蔵庫", Price: 5000, Category: "appliances"},
@@ -216,8 +317,9 @@ func getMockCategories() []CategoryResponse {
 			},
 		},
 		{
-			ID:   "beds",
-			Name: "ベッド・寝具",
+			ID:       "beds",
+			Name:     "ベッド・寝具",
+			Hiragana: "べっどしんぐ",
 			Items: []Item{
 				{ID: "single-bed", Name: "シングルベッド", Price: 3000, Category: "beds"},
 				{ID: "double-bed", Name: "ダブルベッド", Price: 4500, Category: "beds"},
@@ -226,8 +328,9 @@ func getMockCategories() []CategoryResponse {
 			},
 		},
 		{
-			ID:   "other",
-			Name: "その他",
+			ID:       "other",
+			Name:     "その他",
+			Hiragana: "そのた",
 			Items: []Item{
 				{ID: "other-small", Name: "その他（小）", Price: 500, Category: "other"},
 				{ID: "other-medium", Name: "その他（中）", Price: 1500, Category: "other"},
@@ -236,32 +339,6 @@ func getMockCategories() []CategoryResponse {
 			},
 		},
 	}
-}
-
-// sortCategoriesDescending sorts items within each category by price (high to low)
-func sortCategoriesDescending(categories []CategoryResponse) []CategoryResponse {
-	result := make([]CategoryResponse, len(categories))
-
-	for i, category := range categories {
-		result[i] = CategoryResponse{
-			ID:    category.ID,
-			Name:  category.Name,
-			Items: make([]Item, len(category.Items)),
-		}
-
-		copy(result[i].Items, category.Items)
-
-		// Sort items by price (descending)
-		for j := 0; j < len(result[i].Items)-1; j++ {
-			for k := j + 1; k < len(result[i].Items); k++ {
-				if result[i].Items[j].Price < result[i].Items[k].Price {
-					result[i].Items[j], result[i].Items[k] = result[i].Items[k], result[i].Items[j]
-				}
-			}
-		}
-	}
-
-	return result
 }
 
 // getDataSource returns the data source string for response
