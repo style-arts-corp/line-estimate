@@ -119,7 +119,7 @@ jobs:
             --set-env-vars="GIN_MODE=${{ steps.env.outputs.GIN_MODE }},GOOGLE_DRIVE_FOLDER_ID=1X0IQJWG6Ss47skLDgH_xkJGRGXmuE7Kf,SAVE_LOCAL_PDF=false" \
             --set-secrets="JWT_SECRET=jwt-secret:latest" \
             --set-secrets="GOOGLE_SERVICE_ACCOUNT_KEY=drive-service-account-key:latest" \
-            --service-account github-action-999236392@disposal-estimate.iam.gserviceaccount.com \
+            --service-account 458490939918-compute@developer.gserviceaccount.com \
             --timeout 300
 
       - name: Get service URL
