@@ -102,81 +102,123 @@ func (h *PDFHelper) DrawTitle(title string) error {
 }
 
 // DrawTable draws the items table
-func (h *PDFHelper) DrawTable(items []models.PDFLineItem, startY float64) (float64, error) {
+func (h *PDFHelper) DrawTable(estimate *models.PDFEstimate, startY float64) (float64, error) {
+	// Set font for the table
 	if err := h.pdf.SetFont("noto-sans", "", 10); err != nil {
 		return startY, err
 	}
 
-	// Table headers
-	headers := []string{"品目", "数量", "単価（円）", "金額（円）"}
-	colWidths := []float64{250, 80, 100, 100}
-	startX := float64(50)
+	// Set the starting position for the table
+	marginLeft := 50.0
+	rowHeight := 25.0
+	items := estimate.Items
+	// Add 3 more rows for subtotal, tax, and total
+	maxRows := len(items) + 3
 
-	// Draw header row
-	h.pdf.SetLineWidth(0.5)
-	currentX := startX
-	for i, header := range headers {
-		h.pdf.SetX(currentX)
-		h.pdf.SetY(startY)
-		h.pdf.Cell(nil, header)
+	// Create a new table layout
+	table := h.pdf.NewTableLayout(marginLeft, startY, rowHeight, maxRows)
 
-		// Draw vertical lines
-		h.pdf.Line(currentX, startY-5, currentX, startY+20)
-		currentX += colWidths[i]
-	}
-	// Last vertical line
-	h.pdf.Line(currentX, startY-5, currentX, startY+20)
+	// Add columns to the table (total width: 495 to match header)
+	table.AddColumn("品目", 235, "left")
+	table.AddColumn("数量", 70, "right")
+	table.AddColumn("単価（円）", 95, "right")
+	table.AddColumn("金額（円）", 95, "right")
 
-	// Draw horizontal line under headers
-	h.pdf.Line(startX, startY+20, startX+530, startY+20)
+	// Set the style for table header
+	table.SetHeaderStyle(gopdf.CellStyle{
+		BorderStyle: gopdf.BorderStyle{
+			Top:      false,
+			Left:     false,
+			Bottom:   true,
+			Right:    false,
+			Width:    0.5,
+			RGBColor: gopdf.RGBColor{R: 0, G: 0, B: 0},
+		},
+		FillColor: gopdf.RGBColor{R: 242, G: 242, B: 242},
+		TextColor: gopdf.RGBColor{R: 0, G: 0, B: 0},
+		Font:      "noto-sans",
+		FontSize:  10,
+	})
 
-	// Draw items
-	currentY := startY + 30
+	// Set the style for table cells
+	table.SetCellStyle(gopdf.CellStyle{
+		BorderStyle: gopdf.BorderStyle{
+			Top:      false,
+			Left:     false,
+			Bottom:   true,
+			Right:    false,
+			Width:    0.5,
+			RGBColor: gopdf.RGBColor{R: 0, G: 0, B: 0},
+		},
+		FillColor: gopdf.RGBColor{R: 255, G: 255, B: 255},
+		TextColor: gopdf.RGBColor{R: 0, G: 0, B: 0},
+		Font:      "noto-sans",
+		FontSize:  10,
+	})
+
+	// Add rows to the table
 	for _, item := range items {
-		currentX = startX
-
-		// Description
-		h.pdf.SetX(currentX + 5)
-		h.pdf.SetY(currentY)
-		h.pdf.Cell(nil, item.Description)
-		h.pdf.Line(currentX, currentY-5, currentX, currentY+20)
-		currentX += colWidths[0]
-
-		// Quantity
-		h.pdf.SetX(currentX + 5)
-		h.pdf.SetY(currentY)
 		quantityStr := fmt.Sprintf("%.0f", item.Quantity)
 		if item.Unit != "" {
 			quantityStr = fmt.Sprintf("%.0f%s", item.Quantity, item.Unit)
 		}
-		h.pdf.Cell(nil, quantityStr)
-		h.pdf.Line(currentX, currentY-5, currentX, currentY+20)
-		currentX += colWidths[1]
+		unitPriceStr := FormatCurrency(item.UnitPrice)
+		amountStr := FormatCurrency(item.Amount)
 
-		// Unit price
-		h.pdf.SetX(currentX + 5)
-		h.pdf.SetY(currentY)
-		h.pdf.Cell(nil, FormatCurrency(item.UnitPrice))
-		h.pdf.Line(currentX, currentY-5, currentX, currentY+20)
-		currentX += colWidths[2]
-
-		// Amount
-		h.pdf.SetX(currentX + 5)
-		h.pdf.SetY(currentY)
-		h.pdf.Cell(nil, FormatCurrency(item.Amount))
-		h.pdf.Line(currentX, currentY-5, currentX, currentY+20)
-		currentX += colWidths[3]
-
-		// Last vertical line
-		h.pdf.Line(currentX, currentY-5, currentX, currentY+20)
-
-		// Horizontal line
-		h.pdf.Line(startX, currentY+20, startX+530, currentY+20)
-
-		currentY += 25
+		table.AddRow([]string{
+			item.Description,
+			quantityStr,
+			unitPriceStr,
+			amountStr,
+		})
 	}
 
-	return currentY, nil
+	// Add subtotal row
+	table.AddRow([]string{
+		"",
+		"",
+		"小計",
+		FormatCurrency(estimate.SubTotal),
+	})
+
+	// Add tax row
+	taxLabel := fmt.Sprintf("消費税（%.0f%%）", estimate.TaxRate*100)
+	table.AddRow([]string{
+		"",
+		"",
+		taxLabel,
+		FormatCurrency(estimate.Tax),
+	})
+
+	// Add total row
+	table.AddRow([]string{
+		"",
+		"",
+		"合計金額",
+		FormatCurrency(estimate.Total),
+	})
+
+	// Draw the table
+	table.DrawTable()
+
+	// Draw a thicker line above subtotal row
+	// Position: header (1 row) + item rows - 1
+	subtotalRowY := startY + rowHeight + (rowHeight * float64(len(items)))
+	h.pdf.SetLineWidth(1.5) // Thicker line
+	h.pdf.SetStrokeColor(0, 0, 0)
+	h.pdf.Line(marginLeft, subtotalRowY, marginLeft+495, subtotalRowY)
+
+	// Draw a thicker line above total row
+	// Position: header (1 row) + item rows + subtotal row + tax row
+	totalRowY := startY + rowHeight + (rowHeight * float64(len(items)+2))
+	h.pdf.SetLineWidth(1.5) // Thicker line
+	h.pdf.SetStrokeColor(0, 0, 0)
+	h.pdf.Line(marginLeft, totalRowY, marginLeft+495, totalRowY)
+
+	// Calculate the end Y position (header + all rows including totals)
+	endY := startY + rowHeight + (rowHeight * float64(maxRows))
+
+	return endY, nil
 }
 
 // DrawTotals draws the totals section
@@ -222,13 +264,16 @@ func (h *PDFHelper) DrawRemarks(remarks []string, startY float64) error {
 		return err
 	}
 
-	// Draw remarks box
-	h.pdf.SetLineWidth(0.5)
-	h.pdf.Rectangle(50, startY, 480, 100, "D", 0, 0)
+	// Draw remarks box with fill
+	h.pdf.SetLineWidth(1.0)
+	h.pdf.SetStrokeColor(0, 0, 0)     // Black border
+	h.pdf.SetFillColor(255, 255, 255) // White fill
+	h.pdf.RectFromUpperLeftWithStyle(50, startY, 495, 100, "FD")
 
 	// Remarks title
 	h.pdf.SetX(55)
 	h.pdf.SetY(startY + 10)
+	h.pdf.SetTextColor(0, 0, 0) // Ensure text is black
 	h.pdf.Cell(nil, "【備考】")
 
 	// Remarks content

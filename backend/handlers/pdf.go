@@ -61,32 +61,56 @@ func GenerateEstimatePDF(estimate *models.PDFEstimate) (*gopdf.GoPdf, error) {
 		return nil, err
 	}
 
-	// Draw items table
-	tableEndY, err := helper.DrawTable(estimate.Items, 320)
+	// Draw items table (now includes totals)
+	tableEndY, err := helper.DrawTable(estimate, 320)
 	if err != nil {
-		return nil, err
-	}
-
-	// Draw totals
-	if err := helper.DrawTotals(estimate, tableEndY+20); err != nil {
 		return nil, err
 	}
 
 	// Draw remarks
 	if len(estimate.Remarks) > 0 {
-		if err := helper.DrawRemarks(estimate.Remarks, tableEndY+120); err != nil {
+		if err := helper.DrawRemarks(estimate.Remarks, tableEndY+20); err != nil {
 			return nil, err
 		}
 	}
 
 	// Second page (for company seal)
 	pdf.AddPage()
-	pdf.SetX(450)
-	pdf.SetY(100)
 	if err := pdf.SetFont("noto-sans", "", 10); err != nil {
 		return nil, err
 	}
-	pdf.Cell(nil, "社印")
+
+	// Draw "社印" label with border
+	// First, measure text dimensions
+	textStr := "社印"
+	textWidth, _ := pdf.MeasureTextWidth(textStr)
+
+	// Define box dimensions as a square
+	boxSize := 40.0 // Larger square
+
+	// Position the box centered above the seal area
+	sealBoxX := 430.0
+	sealBoxWidth := 100.0
+	boxX := sealBoxX + (sealBoxWidth-boxSize)/2
+	boxY := 75.0 // Above the seal box
+
+	// Draw white-filled square with black border
+	pdf.SetLineWidth(1.0)
+	pdf.SetStrokeColor(0, 0, 0)     // Black border
+	pdf.SetFillColor(255, 255, 255) // White fill
+	pdf.RectFromUpperLeftWithStyle(boxX, boxY, boxSize, boxSize, "FD")
+
+	// Calculate text position to center it in the box
+	// For vertical centering, we need to account for font baseline
+	fontSize := 10.0
+	textX := boxX + (boxSize-textWidth)/2
+	textY := boxY + (boxSize / 2) + (fontSize / 3) // Approximate centering
+
+	// Draw the text
+	pdf.SetX(textX)
+	pdf.SetY(textY)
+	pdf.SetTextColor(0, 0, 0) // Black text
+	pdf.Cell(nil, textStr)
 
 	// Draw box for seal
 	pdf.SetLineWidth(0.5)
@@ -120,13 +144,6 @@ func CreateEstimatePDF(c *gin.Context) {
 		return
 	}
 
-	// PDFをバイト配列に変換
-	var buf bytes.Buffer
-	if err := pdf.Write(&buf); err != nil {
-		utils.SendErrorResponse(c, 500, "PDFの書き込みに失敗しました: "+err.Error())
-		return
-	}
-
 	// Generate unique filename with timestamp
 	timestamp := time.Now().Format("20060102_150405")
 	filename := fmt.Sprintf("estimate_%s_%s.pdf", estimate.EstimateNo, timestamp)
@@ -153,6 +170,13 @@ func CreateEstimatePDF(c *gin.Context) {
 			"filename":   filename,
 			"local_path": localPath,
 		})
+		return
+	}
+
+	// PDFをバイト配列に変換（Google Drive保存の場合のみ）
+	var buf bytes.Buffer
+	if err := pdf.Write(&buf); err != nil {
+		utils.SendErrorResponse(c, 500, "PDFの書き込みに失敗しました: "+err.Error())
 		return
 	}
 
@@ -240,13 +264,6 @@ func CreatePDF(c *gin.Context) {
 		return
 	}
 
-	// PDFをバイト配列に変換
-	var buf bytes.Buffer
-	if err := pdf.Write(&buf); err != nil {
-		utils.SendErrorResponse(c, 500, "PDFの書き込みに失敗しました: "+err.Error())
-		return
-	}
-
 	// Generate unique filename with timestamp
 	timestamp := time.Now().Format("20060102_150405")
 	filename := fmt.Sprintf("test_estimate_%s.pdf", timestamp)
@@ -273,6 +290,13 @@ func CreatePDF(c *gin.Context) {
 			"filename":   filename,
 			"local_path": localPath,
 		})
+		return
+	}
+
+	// PDFをバイト配列に変換（Google Drive保存の場合のみ）
+	var buf bytes.Buffer
+	if err := pdf.Write(&buf); err != nil {
+		utils.SendErrorResponse(c, 500, "PDFの書き込みに失敗しました: "+err.Error())
 		return
 	}
 
