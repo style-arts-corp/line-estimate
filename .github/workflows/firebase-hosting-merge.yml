@@ -87,6 +87,7 @@ jobs:
 
       - name: Build
         run: >-
+          VITE_API_URL="${{ vars.NEXT_PUBLIC_API_URL }}"
           pnpm build
 
       - uses: FirebaseExtended/action-hosting-deploy@v0
