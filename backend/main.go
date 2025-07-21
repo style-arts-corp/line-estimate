@@ -10,8 +10,8 @@ import (
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
 
-	"line-estimate-backend/handlers"
 	_ "line-estimate-backend/docs"
+	"line-estimate-backend/handlers"
 )
 
 // @title Line Estimate API
