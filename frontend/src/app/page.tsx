@@ -7,14 +7,31 @@ import { SelectedItemsList } from '@/components/selected-items-list'
 import { QuoteSummary } from '@/components/quote-summary'
 import { CustomItemForm } from '@/components/custom-item-form'
 import { useRouter } from 'next/navigation'
-import { MOCK_CATEGORIES } from '@/lib/mock-data'
 import { customerInfoSchema } from '@/lib/validation'
 import { useAppContext } from '@/contexts/AppContext'
-import type { Item, CustomerInfo } from '@/lib/types'
+import type { Item, CustomerInfo, Category } from '@/lib/types'
+import { useGetApiV1Categories } from '@/orval/generated/categories/categories'
+import { Category as ApiCategory } from '@/orval/generated/model/category'
+
+
+// APIレスポンスをアプリケーションの型に変換
+const mapApiCategoriesToAppCategories = (apiCategories: ApiCategory[]): Category[] => {
+  return apiCategories.map(cat => ({
+    id: cat.id || '',
+    name: cat.name || '',
+    items: (cat.items || []).map((item: NonNullable<ApiCategory["items"]>[number]) => ({
+      id: item.id || '',
+      name: item.name || '',
+      price: item.price || 0,
+      category: item.category || cat.name || ''
+    }))
+  }))
+}
 
 export default function Home() {
   const router = useRouter()
   const { state, dispatch } = useAppContext()
+  const { data: categoriesData, isLoading, error } = useGetApiV1Categories()
   const [customerInfo, setCustomerInfo] = useState<CustomerInfo>({
     name: '',
     address: '',
@@ -158,8 +175,23 @@ export default function Home() {
 
         <div className="bg-white rounded-lg shadow p-4">
           <h2 className="text-lg font-semibold text-gray-900 mb-4">廃棄品選択</h2>
-          <CategoryAccordion categories={MOCK_CATEGORIES} onItemSelect={addItem} />
-          <CustomItemForm onAddCustomItem={addItem} />
+          {isLoading && (
+            <div className="text-center py-4">
+              <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+              <p className="mt-2 text-gray-600">カテゴリーを読み込んでいます...</p>
+            </div>
+          )}
+          {error != null && (
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-600 mb-4">
+              カテゴリーの読み込みに失敗しました。再度お試しください。
+            </div>
+          )}
+          {!isLoading && !error && categoriesData?.data?.categories && (
+            <>
+              <CategoryAccordion categories={mapApiCategoriesToAppCategories(categoriesData.data.categories)} onItemSelect={addItem} />
+              <CustomItemForm onAddCustomItem={addItem} />
+            </>
+          )}
         </div>
 
         {state.selectedItems.length > 0 && (
