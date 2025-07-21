@@ -14,13 +14,14 @@ type CustomClient<T> = (data: {
   headers?: Record<string, string | number>;
   data?: BodyType<unknown>;
   signal?: AbortSignal;
+  responseType?: 'json' | 'blob';
 }) => Promise<T>;
 
 export const useCustomClient = <T>(): CustomClient<T> => {
   // const { fetchIdToken } = useFirebaseCurrentUser();
   // const { user } = useAuth();
 
-  return async ({ url, method, params, data }) => {
+  return async ({ url, method, params, data, responseType = 'json' }) => {
     // const firebaseToken = await fetchIdToken();
     // const token = firebaseToken || user?.authToken || '';
 
@@ -44,9 +45,24 @@ export const useCustomClient = <T>(): CustomClient<T> => {
       },
       ...(data ? { body: JSON.stringify(data) } : {}),
     }).then(async (response) => {
+      if (!response.ok) {
+        let errorData;
+        try {
+          errorData = await response.json();
+        } catch {
+          errorData = { message: response.statusText };
+        }
+        // NOTE: react-queryにエラーとして扱わせるためにエラーをthrowする(ここでthrowしないとエラーとして扱われないので注意)
+        throw errorData;
+      }
+
       let responseData: T;
       try {
-        responseData = (await response.json()) as T;
+        if (responseType === 'blob') {
+          responseData = (await response.blob()) as T;
+        } else {
+          responseData = (await response.json()) as T;
+        }
       } catch (err) {
         // NOTE:JSONの変換処理エラーは一旦スルーとする(空のresponseの際に発生)
         if (err instanceof SyntaxError) {
@@ -55,12 +71,6 @@ export const useCustomClient = <T>(): CustomClient<T> => {
 
         // TODO: エラーを後ほど分岐する
         return undefined as T;
-      }
-
-      // TODO: 詳細なエラーハンドリングを行う
-      if (!response.ok) {
-        // NOTE: react-queryにエラーとして扱わせるためにエラーをthrowする(ここでthrowしないとエラーとして扱われないので注意)
-        throw responseData;
       }
 
       return responseData;
