@@ -5,7 +5,7 @@ export default {
     },
     output: {
       mode: 'tags-split',
-      workspace: './app/orval',
+      workspace: './src/orval',
       target: 'generated/lineEstimateApi.ts',
       schemas: 'generated/model',
       indexFiles: false,
