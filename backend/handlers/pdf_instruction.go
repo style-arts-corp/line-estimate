@@ -95,7 +95,17 @@ func GenerateInstructionPDF(instruction *models.PDFInstruction) (*gopdf.GoPdf, e
 	return pdf, nil
 }
 
-// CreateInstructionPDF handles the HTTP request to create an instruction sheet PDF
+// CreateInstructionPDF godoc
+// @Summary 指示書PDFを生成
+// @Description 指示書情報からPDFを生成します
+// @Tags Instructions
+// @Accept json
+// @Produce json
+// @Param instruction body models.PDFInstruction true "指示書情報"
+// @Success 200 {object} utils.Response
+// @Failure 400 {object} utils.ErrorResponse
+// @Failure 500 {object} utils.ErrorResponse
+// @Router /api/v1/instructions/pdf [post]
 func CreateInstructionPDF(c *gin.Context) {
 	var instruction models.PDFInstruction
 	if err := c.ShouldBindJSON(&instruction); err != nil {
@@ -136,7 +146,15 @@ func CreateInstructionPDF(c *gin.Context) {
 	})
 }
 
-// CreateTestInstructionPDF creates a test instruction sheet PDF
+// CreateTestInstructionPDF godoc
+// @Summary テスト指示書PDFを生成
+// @Description 開発用のテスト指示書PDFを生成します
+// @Tags Development
+// @Accept json
+// @Produce json
+// @Success 200 {object} utils.Response
+// @Failure 500 {object} utils.ErrorResponse
+// @Router /dev/create-instruction-pdf [get]
 func CreateTestInstructionPDF(c *gin.Context) {
 	// Create test instruction data
 	testInstruction := &models.PDFInstruction{
