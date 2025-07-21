@@ -1,0 +1,618 @@
+basePath: /
+definitions:
+  models.CreateEstimateRequest:
+    properties:
+      description:
+        type: string
+      hourly_rate:
+        minimum: 0
+        type: number
+      title:
+        type: string
+      total_lines:
+        minimum: 1
+        type: integer
+    required:
+    - hourly_rate
+    - title
+    - total_lines
+    type: object
+  models.Estimate:
+    properties:
+      created_at:
+        type: string
+      description:
+        type: string
+      hourly_rate:
+        type: number
+      id:
+        type: integer
+      status:
+        type: string
+      title:
+        type: string
+      total_cost:
+        type: number
+      total_lines:
+        type: integer
+      updated_at:
+        type: string
+      user:
+        $ref: '#/definitions/models.User'
+      user_id:
+        type: integer
+    type: object
+  models.PDFCollectorInfo:
+    properties:
+      address:
+        description: 住所
+        type: string
+      name:
+        description: 名称
+        type: string
+      person:
+        description: 担当
+        type: string
+      recipient:
+        description: 受付
+        type: string
+      tel:
+        description: TEL
+        type: string
+    type: object
+  models.PDFCompanyInfo:
+    properties:
+      address:
+        type: string
+      company_name:
+        type: string
+      fax:
+        type: string
+      postal_code:
+        type: string
+      seal:
+        description: path to seal image
+        type: string
+      tel:
+        type: string
+    type: object
+  models.PDFContractorInfo:
+    properties:
+      address:
+        description: 住所
+        type: string
+      name:
+        description: 名称
+        type: string
+      person:
+        description: 担当
+        type: string
+      recipient:
+        description: 受付
+        type: string
+      tel:
+        description: TEL
+        type: string
+    type: object
+  models.PDFCustomerInfo:
+    properties:
+      address:
+        type: string
+      company_name:
+        type: string
+      fax:
+        type: string
+      postal_code:
+        type: string
+      tel:
+        type: string
+    type: object
+  models.PDFEstimate:
+    properties:
+      customer:
+        $ref: '#/definitions/models.PDFCustomerInfo'
+      estimate_no:
+        type: string
+      issue_date:
+        type: string
+      issuer:
+        $ref: '#/definitions/models.PDFCompanyInfo'
+      items:
+        items:
+          $ref: '#/definitions/models.PDFLineItem'
+        type: array
+      payment_terms:
+        type: string
+      recipient:
+        description: 佐藤 様
+        type: string
+      remarks:
+        items:
+          type: string
+        type: array
+      sub_total:
+        type: number
+      tax:
+        type: number
+      tax_rate:
+        type: number
+      title:
+        type: string
+      total:
+        type: number
+      valid_period:
+        description: days
+        type: integer
+    type: object
+  models.PDFInstruction:
+    properties:
+      collector:
+        allOf:
+        - $ref: '#/definitions/models.PDFCollectorInfo'
+        description: 控 - 収集先
+      contractor:
+        allOf:
+        - $ref: '#/definitions/models.PDFContractorInfo'
+        description: 作業指示書 - 収集先
+      instruction_no:
+        type: string
+      issue_date:
+        type: string
+      items:
+        description: 作業内容
+        items:
+          $ref: '#/definitions/models.PDFWorkItem'
+        type: array
+      memo:
+        description: メモ（印刷されません）
+        type: string
+      work_details:
+        allOf:
+        - $ref: '#/definitions/models.PDFWorkDetails'
+        description: 作業詳細
+    type: object
+  models.PDFLineItem:
+    properties:
+      amount:
+        type: number
+      description:
+        type: string
+      quantity:
+        type: number
+      unit:
+        type: string
+      unit_price:
+        type: number
+    type: object
+  models.PDFWorkDetails:
+    properties:
+      amount:
+        description: 集金額（税込）
+        type: string
+      contractor:
+        description: 作業伝票
+        type: string
+      extra_points:
+        description: 税抜@ ポイント
+        type: boolean
+      manifest:
+        description: マニフェスト
+        type: string
+      manifest_type:
+        description: Tポイント
+        type: string
+      no_recycling_fee:
+        description: リサイクル券無
+        type: boolean
+    type: object
+  models.PDFWorkItem:
+    properties:
+      description:
+        type: string
+    type: object
+  models.UpdateEstimateRequest:
+    properties:
+      description:
+        type: string
+      hourly_rate:
+        minimum: 0
+        type: number
+      status:
+        type: string
+      title:
+        type: string
+      total_lines:
+        minimum: 1
+        type: integer
+    type: object
+  models.UpdateUserRequest:
+    properties:
+      address:
+        type: string
+      email:
+        type: string
+      name:
+        type: string
+      phone:
+        type: string
+    type: object
+  models.User:
+    properties:
+      address:
+        type: string
+      dispose_date:
+        description: 'Format: yyyy/mmdd'
+        type: string
+      email:
+        type: string
+      name:
+        type: string
+      phone:
+        type: string
+    type: object
+  utils.ErrorResponse:
+    description: Standard error response structure
+    properties:
+      error:
+        example: エラーが発生しました
+        type: string
+      success:
+        example: false
+        type: boolean
+    type: object
+  utils.Response:
+    description: Standard API response structure
+    properties:
+      data:
+        type: object
+      error:
+        example: エラーメッセージ
+        type: string
+      message:
+        example: 成功しました
+        type: string
+      success:
+        example: true
+        type: boolean
+    type: object
+host: localhost:18080
+info:
+  contact:
+    email: support@swagger.io
+    name: API Support
+    url: http://www.swagger.io/support
+  description: 見積もり管理システムのAPI
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: http://swagger.io/terms/
+  title: Line Estimate API
+  version: "1.0"
+paths:
+  /api/v1/categories:
+    get:
+      consumes:
+      - application/json
+      description: 商品カテゴリーとアイテムの一覧を取得します
+      parameters:
+      - description: ひらがなでソートするかどうか
+        in: query
+        name: sort
+        type: boolean
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/utils.Response'
+            - properties:
+                data:
+                  additionalProperties: true
+                  type: object
+              type: object
+      summary: カテゴリー一覧を取得
+      tags:
+      - Categories
+  /api/v1/estimates/:
+    get:
+      consumes:
+      - application/json
+      description: すべての見積もりを取得します
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/utils.Response'
+            - properties:
+                data:
+                  additionalProperties: true
+                  type: object
+              type: object
+      summary: 見積もり一覧を取得
+      tags:
+      - Estimates
+    post:
+      consumes:
+      - application/json
+      description: 新しい見積もりを作成します
+      parameters:
+      - description: 見積もり情報
+        in: body
+        name: estimate
+        required: true
+        schema:
+          $ref: '#/definitions/models.CreateEstimateRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            allOf:
+            - $ref: '#/definitions/utils.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/models.Estimate'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+      summary: 見積もりを作成
+      tags:
+      - Estimates
+  /api/v1/estimates/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: 指定したIDの見積もりを削除します
+      parameters:
+      - description: 見積もりID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+      summary: 見積もりを削除
+      tags:
+      - Estimates
+    get:
+      consumes:
+      - application/json
+      description: IDを指定して見積もりを取得します
+      parameters:
+      - description: 見積もりID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/utils.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/models.Estimate'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+      summary: 見積もりを取得
+      tags:
+      - Estimates
+    put:
+      consumes:
+      - application/json
+      description: 指定したIDの見積もりを更新します
+      parameters:
+      - description: 見積もりID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: 更新する見積もり情報
+        in: body
+        name: estimate
+        required: true
+        schema:
+          $ref: '#/definitions/models.UpdateEstimateRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+      summary: 見積もりを更新
+      tags:
+      - Estimates
+  /api/v1/estimates/pdf:
+    post:
+      consumes:
+      - application/json
+      description: 見積もり情報からPDFを生成します
+      parameters:
+      - description: 見積もり情報
+        in: body
+        name: estimate
+        required: true
+        schema:
+          $ref: '#/definitions/models.PDFEstimate'
+      produces:
+      - application/pdf
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: file
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+      summary: 見積もりPDFを生成
+      tags:
+      - Estimates
+  /api/v1/instructions/pdf:
+    post:
+      consumes:
+      - application/json
+      description: 指示書情報からPDFを生成します
+      parameters:
+      - description: 指示書情報
+        in: body
+        name: instruction
+        required: true
+        schema:
+          $ref: '#/definitions/models.PDFInstruction'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+      summary: 指示書PDFを生成
+      tags:
+      - Instructions
+  /api/v1/users/profile:
+    get:
+      consumes:
+      - application/json
+      description: 現在のユーザー情報を取得します
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/utils.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/models.User'
+              type: object
+      summary: ユーザープロフィールを取得
+      tags:
+      - Users
+    put:
+      consumes:
+      - application/json
+      description: ユーザー情報を更新します
+      parameters:
+      - description: 更新するユーザー情報
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/models.UpdateUserRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+      summary: ユーザープロフィールを更新
+      tags:
+      - Users
+  /dev/create-instruction-pdf:
+    get:
+      consumes:
+      - application/json
+      description: 開発用のテスト指示書PDFを生成します
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/utils.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+      summary: テスト指示書PDFを生成
+      tags:
+      - Development
+  /dev/create-pdf:
+    get:
+      consumes:
+      - application/json
+      description: 開発用のテストPDFを生成します
+      produces:
+      - application/pdf
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: file
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+      summary: テストPDFを生成
+      tags:
+      - Development
+  /health:
+    get:
+      consumes:
+      - application/json
+      description: APIの動作状態を確認します
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/utils.Response'
+            - properties:
+                data:
+                  additionalProperties:
+                    type: string
+                  type: object
+              type: object
+      summary: ヘルスチェック
+      tags:
+      - System
+swagger: "2.0"
