@@ -79,33 +79,33 @@ func GenerateEstimatePDF(estimate *models.PDFEstimate) (*gopdf.GoPdf, error) {
 	if err := pdf.SetFont("noto-sans", "", 10); err != nil {
 		return nil, err
 	}
-	
+
 	// Draw "社印" label with border
 	// First, measure text dimensions
 	textStr := "社印"
 	textWidth, _ := pdf.MeasureTextWidth(textStr)
-	
+
 	// Define box dimensions as a square
 	boxSize := 40.0 // Larger square
-	
+
 	// Position the box centered above the seal area
 	sealBoxX := 430.0
 	sealBoxWidth := 100.0
-	boxX := sealBoxX + (sealBoxWidth - boxSize) / 2
+	boxX := sealBoxX + (sealBoxWidth-boxSize)/2
 	boxY := 75.0 // Above the seal box
-	
+
 	// Draw white-filled square with black border
 	pdf.SetLineWidth(1.0)
-	pdf.SetStrokeColor(0, 0, 0) // Black border
+	pdf.SetStrokeColor(0, 0, 0)     // Black border
 	pdf.SetFillColor(255, 255, 255) // White fill
 	pdf.RectFromUpperLeftWithStyle(boxX, boxY, boxSize, boxSize, "FD")
-	
+
 	// Calculate text position to center it in the box
 	// For vertical centering, we need to account for font baseline
 	fontSize := 10.0
-	textX := boxX + (boxSize - textWidth) / 2
+	textX := boxX + (boxSize-textWidth)/2
 	textY := boxY + (boxSize / 2) + (fontSize / 3) // Approximate centering
-	
+
 	// Draw the text
 	pdf.SetX(textX)
 	pdf.SetY(textY)

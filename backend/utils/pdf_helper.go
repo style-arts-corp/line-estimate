@@ -118,11 +118,11 @@ func (h *PDFHelper) DrawTable(estimate *models.PDFEstimate, startY float64) (flo
 	// Create a new table layout
 	table := h.pdf.NewTableLayout(marginLeft, startY, rowHeight, maxRows)
 
-	// Add columns to the table
-	table.AddColumn("品目", 250, "left")
-	table.AddColumn("数量", 80, "right")
-	table.AddColumn("単価（円）", 100, "right")
-	table.AddColumn("金額（円）", 100, "right")
+	// Add columns to the table (total width: 495 to match header)
+	table.AddColumn("品目", 235, "left")
+	table.AddColumn("数量", 70, "right")
+	table.AddColumn("単価（円）", 95, "right")
+	table.AddColumn("金額（円）", 95, "right")
 
 	// Set the style for table header
 	table.SetHeaderStyle(gopdf.CellStyle{
@@ -201,6 +201,20 @@ func (h *PDFHelper) DrawTable(estimate *models.PDFEstimate, startY float64) (flo
 	// Draw the table
 	table.DrawTable()
 
+	// Draw a thicker line above subtotal row
+	// Position: header (1 row) + item rows - 1
+	subtotalRowY := startY + rowHeight + (rowHeight * float64(len(items)))
+	h.pdf.SetLineWidth(1.5) // Thicker line
+	h.pdf.SetStrokeColor(0, 0, 0)
+	h.pdf.Line(marginLeft, subtotalRowY, marginLeft+495, subtotalRowY)
+
+	// Draw a thicker line above total row
+	// Position: header (1 row) + item rows + subtotal row + tax row
+	totalRowY := startY + rowHeight + (rowHeight * float64(len(items)+2))
+	h.pdf.SetLineWidth(1.5) // Thicker line
+	h.pdf.SetStrokeColor(0, 0, 0)
+	h.pdf.Line(marginLeft, totalRowY, marginLeft+495, totalRowY)
+
 	// Calculate the end Y position (header + all rows including totals)
 	endY := startY + rowHeight + (rowHeight * float64(maxRows))
 
@@ -254,7 +268,7 @@ func (h *PDFHelper) DrawRemarks(remarks []string, startY float64) error {
 	h.pdf.SetLineWidth(1.0)
 	h.pdf.SetStrokeColor(0, 0, 0)     // Black border
 	h.pdf.SetFillColor(255, 255, 255) // White fill
-	h.pdf.RectFromUpperLeftWithStyle(50, startY, 480, 100, "FD")
+	h.pdf.RectFromUpperLeftWithStyle(50, startY, 495, 100, "FD")
 
 	// Remarks title
 	h.pdf.SetX(55)
