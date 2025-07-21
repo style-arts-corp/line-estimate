@@ -192,7 +192,7 @@ func CreatePDF(c *gin.Context) {
 	// Create test estimate data
 	testEstimate := &models.PDFEstimate{
 		EstimateNo: "EST-20250425-001",
-		IssueDate:  time.Now(),
+		IssueDate:  time.Now().In(time.FixedZone("JST", 9*60*60)),
 		Customer: models.PDFCustomerInfo{
 			CompanyName: "株式会社丸井",
 			PostalCode:  "123-4567",
