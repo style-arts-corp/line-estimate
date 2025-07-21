@@ -35,7 +35,7 @@ func SuccessResponse(c *gin.Context, data interface{}) {
 	})
 }
 
-func ErrorResponse(c *gin.Context, statusCode int, message string) {
+func SendErrorResponse(c *gin.Context, statusCode int, message string) {
 	c.JSON(statusCode, Response{
 		Success: false,
 		Error:   message,

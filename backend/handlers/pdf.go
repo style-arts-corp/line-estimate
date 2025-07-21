@@ -109,21 +109,21 @@ func GenerateEstimatePDF(estimate *models.PDFEstimate) (*gopdf.GoPdf, error) {
 func CreateEstimatePDF(c *gin.Context) {
 	var estimate models.PDFEstimate
 	if err := c.ShouldBindJSON(&estimate); err != nil {
-		utils.ErrorResponse(c, 400, "無効なリクエストデータ: "+err.Error())
+		utils.SendErrorResponse(c, 400, "無効なリクエストデータ: "+err.Error())
 		return
 	}
 
 	// Generate PDF
 	pdf, err := GenerateEstimatePDF(&estimate)
 	if err != nil {
-		utils.ErrorResponse(c, 500, "PDF生成に失敗しました: "+err.Error())
+		utils.SendErrorResponse(c, 500, "PDF生成に失敗しました: "+err.Error())
 		return
 	}
 
 	// PDFをバイト配列に変換
 	var buf bytes.Buffer
 	if err := pdf.Write(&buf); err != nil {
-		utils.ErrorResponse(c, 500, "PDFの書き込みに失敗しました: "+err.Error())
+		utils.SendErrorResponse(c, 500, "PDFの書き込みに失敗しました: "+err.Error())
 		return
 	}
 
@@ -138,12 +138,12 @@ func CreateEstimatePDF(c *gin.Context) {
 		// ローカル保存のみ
 		pdfDir := "./pdfs"
 		if err := os.MkdirAll(pdfDir, 0755); err != nil {
-			utils.ErrorResponse(c, 500, "PDFディレクトリの作成に失敗しました: "+err.Error())
+			utils.SendErrorResponse(c, 500, "PDFディレクトリの作成に失敗しました: "+err.Error())
 			return
 		}
 		localPath := filepath.Join(pdfDir, filename)
 		if err := pdf.WritePdf(localPath); err != nil {
-			utils.ErrorResponse(c, 500, "PDFのローカル保存に失敗しました: "+err.Error())
+			utils.SendErrorResponse(c, 500, "PDFのローカル保存に失敗しました: "+err.Error())
 			return
 		}
 
@@ -159,14 +159,14 @@ func CreateEstimatePDF(c *gin.Context) {
 	// Google Driveサービスを初期化
 	driveService, err := services.NewDriveService()
 	if err != nil {
-		utils.ErrorResponse(c, 500, "Google Driveサービスの初期化に失敗しました: "+err.Error())
+		utils.SendErrorResponse(c, 500, "Google Driveサービスの初期化に失敗しました: "+err.Error())
 		return
 	}
 
 	// Google Driveにアップロード
 	uploadedFile, err := driveService.UploadFile(filename, "application/pdf", buf.Bytes())
 	if err != nil {
-		utils.ErrorResponse(c, 500, "Google Driveへのアップロードに失敗しました: "+err.Error())
+		utils.SendErrorResponse(c, 500, "Google Driveへのアップロードに失敗しました: "+err.Error())
 		return
 	}
 
@@ -236,14 +236,14 @@ func CreatePDF(c *gin.Context) {
 	// Generate PDF
 	pdf, err := GenerateEstimatePDF(testEstimate)
 	if err != nil {
-		utils.ErrorResponse(c, 500, "PDF生成に失敗しました: "+err.Error())
+		utils.SendErrorResponse(c, 500, "PDF生成に失敗しました: "+err.Error())
 		return
 	}
 
 	// PDFをバイト配列に変換
 	var buf bytes.Buffer
 	if err := pdf.Write(&buf); err != nil {
-		utils.ErrorResponse(c, 500, "PDFの書き込みに失敗しました: "+err.Error())
+		utils.SendErrorResponse(c, 500, "PDFの書き込みに失敗しました: "+err.Error())
 		return
 	}
 
@@ -258,12 +258,12 @@ func CreatePDF(c *gin.Context) {
 		// ローカル保存のみ
 		pdfDir := "./pdfs"
 		if err := os.MkdirAll(pdfDir, 0755); err != nil {
-			utils.ErrorResponse(c, 500, "PDFディレクトリの作成に失敗しました: "+err.Error())
+			utils.SendErrorResponse(c, 500, "PDFディレクトリの作成に失敗しました: "+err.Error())
 			return
 		}
 		localPath := filepath.Join(pdfDir, filename)
 		if err := pdf.WritePdf(localPath); err != nil {
-			utils.ErrorResponse(c, 500, "PDFのローカル保存に失敗しました: "+err.Error())
+			utils.SendErrorResponse(c, 500, "PDFのローカル保存に失敗しました: "+err.Error())
 			return
 		}
 
@@ -279,14 +279,14 @@ func CreatePDF(c *gin.Context) {
 	// Google Driveサービスを初期化
 	driveService, err := services.NewDriveService()
 	if err != nil {
-		utils.ErrorResponse(c, 500, "Google Driveサービスの初期化に失敗しました: "+err.Error())
+		utils.SendErrorResponse(c, 500, "Google Driveサービスの初期化に失敗しました: "+err.Error())
 		return
 	}
 
 	// Google Driveにアップロード
 	uploadedFile, err := driveService.UploadFile(filename, "application/pdf", buf.Bytes())
 	if err != nil {
-		utils.ErrorResponse(c, 500, "Google Driveへのアップロードに失敗しました: "+err.Error())
+		utils.SendErrorResponse(c, 500, "Google Driveへのアップロードに失敗しました: "+err.Error())
 		return
 	}
 

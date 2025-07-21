@@ -970,8 +970,6 @@ var SwaggerInfo = &swag.Spec{
 	Description:      "見積もり管理システムのAPI",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
-	LeftDelim:        "{{",
-	RightDelim:       "}}",
 }
 
 func init() {

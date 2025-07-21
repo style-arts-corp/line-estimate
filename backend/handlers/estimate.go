@@ -52,7 +52,7 @@ func GetEstimates(c *gin.Context) {
 func CreateEstimate(c *gin.Context) {
 	var req models.CreateEstimateRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		utils.ErrorResponse(c, http.StatusBadRequest, err.Error())
+		utils.SendErrorResponse(c, http.StatusBadRequest, err.Error())
 		return
 	}
 
@@ -91,7 +91,7 @@ func CreateEstimate(c *gin.Context) {
 func GetEstimate(c *gin.Context) {
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
-		utils.ErrorResponse(c, http.StatusBadRequest, "Invalid estimate ID")
+		utils.SendErrorResponse(c, http.StatusBadRequest, "Invalid estimate ID")
 		return
 	}
 
@@ -124,13 +124,13 @@ func GetEstimate(c *gin.Context) {
 func UpdateEstimate(c *gin.Context) {
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
-		utils.ErrorResponse(c, http.StatusBadRequest, "Invalid estimate ID")
+		utils.SendErrorResponse(c, http.StatusBadRequest, "Invalid estimate ID")
 		return
 	}
 
 	var req models.UpdateEstimateRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		utils.ErrorResponse(c, http.StatusBadRequest, err.Error())
+		utils.SendErrorResponse(c, http.StatusBadRequest, err.Error())
 		return
 	}
 
@@ -154,7 +154,7 @@ func UpdateEstimate(c *gin.Context) {
 func DeleteEstimate(c *gin.Context) {
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
-		utils.ErrorResponse(c, http.StatusBadRequest, "Invalid estimate ID")
+		utils.SendErrorResponse(c, http.StatusBadRequest, "Invalid estimate ID")
 		return
 	}
 
@@ -203,7 +203,7 @@ func UpdateProfile(c *gin.Context) {
 	}
 
 	if err := c.ShouldBindJSON(&req); err != nil {
-		utils.ErrorResponse(c, http.StatusBadRequest, err.Error())
+		utils.SendErrorResponse(c, http.StatusBadRequest, err.Error())
 		return
 	}
 

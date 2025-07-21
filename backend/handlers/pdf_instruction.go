@@ -109,21 +109,21 @@ func GenerateInstructionPDF(instruction *models.PDFInstruction) (*gopdf.GoPdf, e
 func CreateInstructionPDF(c *gin.Context) {
 	var instruction models.PDFInstruction
 	if err := c.ShouldBindJSON(&instruction); err != nil {
-		utils.ErrorResponse(c, 400, "無効なリクエストデータ: "+err.Error())
+		utils.SendErrorResponse(c, 400, "無効なリクエストデータ: "+err.Error())
 		return
 	}
 
 	// Generate PDF
 	pdf, err := GenerateInstructionPDF(&instruction)
 	if err != nil {
-		utils.ErrorResponse(c, 500, "PDF生成に失敗しました: "+err.Error())
+		utils.SendErrorResponse(c, 500, "PDF生成に失敗しました: "+err.Error())
 		return
 	}
 
 	// Create pdfs directory if it doesn't exist
 	pdfDir := "./pdfs"
 	if err := os.MkdirAll(pdfDir, 0755); err != nil {
-		utils.ErrorResponse(c, 500, "PDFディレクトリの作成に失敗しました")
+		utils.SendErrorResponse(c, 500, "PDFディレクトリの作成に失敗しました")
 		return
 	}
 
@@ -134,7 +134,7 @@ func CreateInstructionPDF(c *gin.Context) {
 
 	// Save the PDF
 	if err := pdf.WritePdf(filepath); err != nil {
-		utils.ErrorResponse(c, 500, "PDFの保存に失敗しました: "+err.Error())
+		utils.SendErrorResponse(c, 500, "PDFの保存に失敗しました: "+err.Error())
 		return
 	}
 
@@ -194,14 +194,14 @@ func CreateTestInstructionPDF(c *gin.Context) {
 	// Generate PDF
 	pdf, err := GenerateInstructionPDF(testInstruction)
 	if err != nil {
-		utils.ErrorResponse(c, 500, "PDF生成に失敗しました: "+err.Error())
+		utils.SendErrorResponse(c, 500, "PDF生成に失敗しました: "+err.Error())
 		return
 	}
 
 	// Create pdfs directory if it doesn't exist
 	pdfDir := "./pdfs"
 	if err := os.MkdirAll(pdfDir, 0755); err != nil {
-		utils.ErrorResponse(c, 500, "PDFディレクトリの作成に失敗しました")
+		utils.SendErrorResponse(c, 500, "PDFディレクトリの作成に失敗しました")
 		return
 	}
 
@@ -212,7 +212,7 @@ func CreateTestInstructionPDF(c *gin.Context) {
 
 	// Save the PDF
 	if err := pdf.WritePdf(filepath); err != nil {
-		utils.ErrorResponse(c, 500, "PDFの保存に失敗しました: "+err.Error())
+		utils.SendErrorResponse(c, 500, "PDFの保存に失敗しました: "+err.Error())
 		return
 	}
 
