@@ -10,6 +10,14 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// GetEstimates godoc
+// @Summary 見積もり一覧を取得
+// @Description すべての見積もりを取得します
+// @Tags Estimates
+// @Accept json
+// @Produce json
+// @Success 200 {object} utils.Response{data=map[string]interface{}}
+// @Router /api/v1/estimates/ [get]
 func GetEstimates(c *gin.Context) {
 	// TODO: データベースから見積もり一覧取得
 	estimates := []models.Estimate{
@@ -31,10 +39,20 @@ func GetEstimates(c *gin.Context) {
 	})
 }
 
+// CreateEstimate godoc
+// @Summary 見積もりを作成
+// @Description 新しい見積もりを作成します
+// @Tags Estimates
+// @Accept json
+// @Produce json
+// @Param estimate body models.CreateEstimateRequest true "見積もり情報"
+// @Success 201 {object} utils.Response{data=models.Estimate}
+// @Failure 400 {object} utils.ErrorResponse
+// @Router /api/v1/estimates/ [post]
 func CreateEstimate(c *gin.Context) {
 	var req models.CreateEstimateRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		utils.ErrorResponse(c, http.StatusBadRequest, err.Error())
+		utils.SendErrorResponse(c, http.StatusBadRequest, err.Error())
 		return
 	}
 
@@ -60,10 +78,20 @@ func CreateEstimate(c *gin.Context) {
 	utils.SuccessResponse(c, estimate)
 }
 
+// GetEstimate godoc
+// @Summary 見積もりを取得
+// @Description IDを指定して見積もりを取得します
+// @Tags Estimates
+// @Accept json
+// @Produce json
+// @Param id path int true "見積もりID"
+// @Success 200 {object} utils.Response{data=models.Estimate}
+// @Failure 400 {object} utils.ErrorResponse
+// @Router /api/v1/estimates/{id} [get]
 func GetEstimate(c *gin.Context) {
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
-		utils.ErrorResponse(c, http.StatusBadRequest, "Invalid estimate ID")
+		utils.SendErrorResponse(c, http.StatusBadRequest, "Invalid estimate ID")
 		return
 	}
 
@@ -82,16 +110,27 @@ func GetEstimate(c *gin.Context) {
 	utils.SuccessResponse(c, estimate)
 }
 
+// UpdateEstimate godoc
+// @Summary 見積もりを更新
+// @Description 指定したIDの見積もりを更新します
+// @Tags Estimates
+// @Accept json
+// @Produce json
+// @Param id path int true "見積もりID"
+// @Param estimate body models.UpdateEstimateRequest true "更新する見積もり情報"
+// @Success 200 {object} utils.Response
+// @Failure 400 {object} utils.ErrorResponse
+// @Router /api/v1/estimates/{id} [put]
 func UpdateEstimate(c *gin.Context) {
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
-		utils.ErrorResponse(c, http.StatusBadRequest, "Invalid estimate ID")
+		utils.SendErrorResponse(c, http.StatusBadRequest, "Invalid estimate ID")
 		return
 	}
 
 	var req models.UpdateEstimateRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		utils.ErrorResponse(c, http.StatusBadRequest, err.Error())
+		utils.SendErrorResponse(c, http.StatusBadRequest, err.Error())
 		return
 	}
 
@@ -102,10 +141,20 @@ func UpdateEstimate(c *gin.Context) {
 	})
 }
 
+// DeleteEstimate godoc
+// @Summary 見積もりを削除
+// @Description 指定したIDの見積もりを削除します
+// @Tags Estimates
+// @Accept json
+// @Produce json
+// @Param id path int true "見積もりID"
+// @Success 200 {object} utils.Response
+// @Failure 400 {object} utils.ErrorResponse
+// @Router /api/v1/estimates/{id} [delete]
 func DeleteEstimate(c *gin.Context) {
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
-		utils.ErrorResponse(c, http.StatusBadRequest, "Invalid estimate ID")
+		utils.SendErrorResponse(c, http.StatusBadRequest, "Invalid estimate ID")
 		return
 	}
 
@@ -116,6 +165,14 @@ func DeleteEstimate(c *gin.Context) {
 	})
 }
 
+// GetProfile godoc
+// @Summary ユーザープロフィールを取得
+// @Description 現在のユーザー情報を取得します
+// @Tags Users
+// @Accept json
+// @Produce json
+// @Success 200 {object} utils.Response{data=models.User}
+// @Router /api/v1/users/profile [get]
 func GetProfile(c *gin.Context) {
 	// userID := c.GetFloat64("userID")
 
@@ -128,6 +185,16 @@ func GetProfile(c *gin.Context) {
 	utils.SuccessResponse(c, user)
 }
 
+// UpdateProfile godoc
+// @Summary ユーザープロフィールを更新
+// @Description ユーザー情報を更新します
+// @Tags Users
+// @Accept json
+// @Produce json
+// @Param user body models.UpdateUserRequest true "更新するユーザー情報"
+// @Success 200 {object} utils.Response
+// @Failure 400 {object} utils.ErrorResponse
+// @Router /api/v1/users/profile [put]
 func UpdateProfile(c *gin.Context) {
 	// userID := c.GetFloat64("userID")
 
@@ -136,7 +203,7 @@ func UpdateProfile(c *gin.Context) {
 	}
 
 	if err := c.ShouldBindJSON(&req); err != nil {
-		utils.ErrorResponse(c, http.StatusBadRequest, err.Error())
+		utils.SendErrorResponse(c, http.StatusBadRequest, err.Error())
 		return
 	}
 

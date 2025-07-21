@@ -7,9 +7,27 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 
+	_ "line-estimate-backend/docs"
 	"line-estimate-backend/handlers"
 )
+
+// @title Line Estimate API
+// @version 1.0
+// @description 見積もり管理システムのAPI
+// @termsOfService http://swagger.io/terms/
+
+// @contact.name API Support
+// @contact.url http://www.swagger.io/support
+// @contact.email support@swagger.io
+
+// @license.name Apache 2.0
+// @license.url http://www.apache.org/licenses/LICENSE-2.0.html
+
+// @host localhost:18080
+// @BasePath /
 
 func main() {
 	// 環境変数の読み込み
@@ -41,6 +59,9 @@ func main() {
 
 		c.Next()
 	})
+
+	// Swagger UI
+	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
 	// ヘルスチェック
 	r.GET("/health", handlers.HealthCheck)

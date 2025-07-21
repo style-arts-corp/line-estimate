@@ -1,0 +1,435 @@
+openapi: 3.0.0
+info:
+  title: Line Estimate API
+  description: 見積もり管理システムのAPI
+  version: 1.0.0
+servers:
+  - url: http://localhost:18080
+    description: ローカル開発サーバー
+paths:
+  /health:
+    get:
+      summary: ヘルスチェック
+      tags:
+        - System
+      responses:
+        '200':
+          description: 正常なレスポンス
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      message:
+                        type: string
+                        example: "API is running. API は正常に動作しています。"
+                      status:
+                        type: string
+                        example: "ok"
+  
+  /api/v1/categories:
+    get:
+      summary: カテゴリー一覧を取得
+      tags:
+        - Categories
+      responses:
+        '200':
+          description: カテゴリー一覧
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      categories:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Category'
+                      sorted:
+                        type: boolean
+                        example: false
+                      source:
+                        type: string
+                        example: "mock_data"
+  
+  /api/v1/estimates/:
+    get:
+      summary: 見積もり一覧を取得
+      tags:
+        - Estimates
+      responses:
+        '200':
+          description: 見積もり一覧
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      estimates:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Estimate'
+                      total:
+                        type: integer
+                        example: 1
+    
+    post:
+      summary: 見積もりを作成
+      tags:
+        - Estimates
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EstimateInput'
+      responses:
+        '201':
+          description: 作成された見積もり
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/Estimate'
+  
+  /api/v1/estimates/{id}:
+    get:
+      summary: 見積もりを取得
+      tags:
+        - Estimates
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: 見積もり詳細
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/Estimate'
+    
+    put:
+      summary: 見積もりを更新
+      tags:
+        - Estimates
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EstimateInput'
+      responses:
+        '200':
+          description: 更新された見積もり
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/Estimate'
+    
+    delete:
+      summary: 見積もりを削除
+      tags:
+        - Estimates
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: 削除成功
+  
+  /api/v1/estimates/pdf:
+    post:
+      summary: 見積もりPDFを生成
+      tags:
+        - Estimates
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EstimatePDFRequest'
+      responses:
+        '200':
+          description: PDFファイル
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+  
+  /api/v1/instructions/pdf:
+    post:
+      summary: 指示書PDFを生成
+      tags:
+        - Instructions
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InstructionPDFRequest'
+      responses:
+        '200':
+          description: PDFファイル
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+  
+  /api/v1/users/profile:
+    get:
+      summary: ユーザープロフィールを取得
+      tags:
+        - Users
+      responses:
+        '200':
+          description: ユーザープロフィール
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/UserProfile'
+    
+    put:
+      summary: ユーザープロフィールを更新
+      tags:
+        - Users
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserProfile'
+      responses:
+        '200':
+          description: 更新されたプロフィール
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/UserProfile'
+  
+  /dev/create-pdf:
+    get:
+      summary: 開発用PDFの生成
+      tags:
+        - Development
+      responses:
+        '200':
+          description: PDFファイル
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+  
+  /dev/create-instruction-pdf:
+    get:
+      summary: 開発用指示書PDFの生成
+      tags:
+        - Development
+      responses:
+        '200':
+          description: PDFファイル
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+
+components:
+  schemas:
+    Category:
+      type: object
+      properties:
+        id:
+          type: string
+          example: "chairs"
+        name:
+          type: string
+          example: "椅子"
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Item'
+    
+    Item:
+      type: object
+      properties:
+        id:
+          type: string
+          example: "pipe-chair"
+        name:
+          type: string
+          example: "パイプ椅子"
+        price:
+          type: number
+          example: 500
+        category:
+          type: string
+          example: "chairs"
+    
+    Estimate:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        user_id:
+          type: integer
+          example: 1
+        title:
+          type: string
+          example: "Webアプリケーション開発"
+        description:
+          type: string
+          example: "React + Node.js"
+        total_lines:
+          type: integer
+          example: 5000
+        hourly_rate:
+          type: integer
+          example: 8000
+        total_cost:
+          type: integer
+          example: 400000
+        status:
+          type: string
+          example: "completed"
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        user:
+          $ref: '#/components/schemas/User'
+    
+    User:
+      type: object
+      properties:
+        name:
+          type: string
+        address:
+          type: string
+        phone:
+          type: string
+        email:
+          type: string
+        dispose_date:
+          type: string
+    
+    EstimateInput:
+      type: object
+      required:
+        - title
+        - total_lines
+        - hourly_rate
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        total_lines:
+          type: integer
+        hourly_rate:
+          type: integer
+        user:
+          $ref: '#/components/schemas/User'
+    
+    EstimatePDFRequest:
+      type: object
+      properties:
+        estimate:
+          $ref: '#/components/schemas/EstimateInput'
+    
+    InstructionPDFRequest:
+      type: object
+      properties:
+        instruction:
+          type: object
+          properties:
+            user:
+              $ref: '#/components/schemas/User'
+            items:
+              type: array
+              items:
+                $ref: '#/components/schemas/Item'
+    
+    UserProfile:
+      type: object
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+        phone:
+          type: string
+        address:
+          type: string
+
+tags:
+  - name: System
+    description: システム関連のエンドポイント
+  - name: Categories
+    description: カテゴリー関連のエンドポイント
+  - name: Estimates
+    description: 見積もり関連のエンドポイント
+  - name: Instructions
+    description: 指示書関連のエンドポイント
+  - name: Users
+    description: ユーザー関連のエンドポイント
+  - name: Development
+    description: 開発用のエンドポイント
