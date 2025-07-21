@@ -120,13 +120,6 @@ func CreateEstimatePDF(c *gin.Context) {
 		return
 	}
 
-	// PDFをバイト配列に変換
-	var buf bytes.Buffer
-	if err := pdf.Write(&buf); err != nil {
-		utils.SendErrorResponse(c, 500, "PDFの書き込みに失敗しました: "+err.Error())
-		return
-	}
-
 	// Generate unique filename with timestamp
 	timestamp := time.Now().Format("20060102_150405")
 	filename := fmt.Sprintf("estimate_%s_%s.pdf", estimate.EstimateNo, timestamp)
@@ -153,6 +146,13 @@ func CreateEstimatePDF(c *gin.Context) {
 			"filename":   filename,
 			"local_path": localPath,
 		})
+		return
+	}
+
+	// PDFをバイト配列に変換（Google Drive保存の場合のみ）
+	var buf bytes.Buffer
+	if err := pdf.Write(&buf); err != nil {
+		utils.SendErrorResponse(c, 500, "PDFの書き込みに失敗しました: "+err.Error())
 		return
 	}
 
@@ -240,13 +240,6 @@ func CreatePDF(c *gin.Context) {
 		return
 	}
 
-	// PDFをバイト配列に変換
-	var buf bytes.Buffer
-	if err := pdf.Write(&buf); err != nil {
-		utils.SendErrorResponse(c, 500, "PDFの書き込みに失敗しました: "+err.Error())
-		return
-	}
-
 	// Generate unique filename with timestamp
 	timestamp := time.Now().Format("20060102_150405")
 	filename := fmt.Sprintf("test_estimate_%s.pdf", timestamp)
@@ -273,6 +266,13 @@ func CreatePDF(c *gin.Context) {
 			"filename":   filename,
 			"local_path": localPath,
 		})
+		return
+	}
+
+	// PDFをバイト配列に変換（Google Drive保存の場合のみ）
+	var buf bytes.Buffer
+	if err := pdf.Write(&buf); err != nil {
+		utils.SendErrorResponse(c, 500, "PDFの書き込みに失敗しました: "+err.Error())
 		return
 	}
 
