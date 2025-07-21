@@ -17,11 +17,11 @@ export default {
           name: 'useCustomClient',
         },
       },
-      mock: {
-        type: 'msw',
-        delay: 1000,
-        useExamples: true,
-      },
+      // mock: {
+      //   type: 'msw',
+      //   delay: 1000,
+      //   useExamples: true,
+      // },
     },
     hooks: {
       afterAllFilesWrite: 'prettier --write',

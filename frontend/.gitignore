@@ -40,5 +40,8 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-
+# orval
 src/orval/generated/*
+
+# pnpm(docker)
+.pnpm-store

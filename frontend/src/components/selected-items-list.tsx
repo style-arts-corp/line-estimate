@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useRef, useState } from 'react'
+import Image from 'next/image'
 import { Trash2, Camera, X, Edit, Check } from 'lucide-react'
 import type { SelectedItem } from '@/lib/types'
 
@@ -60,10 +61,11 @@ export function SelectedItemsList({
             <div className="flex-shrink-0">
               {item.imageUrl ? (
                 <div className="relative w-24 h-24">
-                  <img
+                  <Image
                     src={item.imageUrl}
                     alt={item.name}
-                    className="w-full h-full object-cover rounded-lg"
+                    fill
+                    className="object-cover rounded-lg"
                   />
                   <button
                     onClick={() => onImageRemove(item.id)}

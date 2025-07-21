@@ -1,20 +1,12 @@
 // NOTE: T3 ENV 公式ドキュメントを参照
-// https://env.t3.gg/docs/core
+// https://env.t3.gg/docs/nextjs
 
-import { createEnv } from '@t3-oss/env-core';
+import { createEnv } from '@t3-oss/env-nextjs';
 import { z } from 'zod';
 
 export const env = createEnv({
-  // server: {
-  //   DATABASE_URL: z.string().url(),
-  // },
 
-  /**
-   * The prefix that client-side variables must have. This is enforced both at
-   * a type-level and at runtime.
-   */
-  clientPrefix: 'NEXT_PUBLIC_',
-
+  // server: {},
   client: {
     NEXT_PUBLIC_API_URL: z.string().min(1),
   },
@@ -23,7 +15,9 @@ export const env = createEnv({
    * What object holds the environment variables at runtime. This is usually
    * `process.env` or `import.meta.env`.
    */
-  runtimeEnv: process.env,
+  runtimeEnv: {
+    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL,
+  },
 
   /**
    * By default, this library will feed the environment variables directly to
