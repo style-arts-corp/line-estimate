@@ -109,7 +109,9 @@ jobs:
             --min-instances 0 \
             --max-instances 10 \
             --port 8080 \
-            --set-env-vars="GIN_MODE=${{ steps.env.outputs.GIN_MODE }},SAVE_LOCAL_PDF=false" \
+            --set-env-vars="GIN_MODE=${{ steps.env.outputs.GIN_MODE }}" \
+            --set-env-vars="SAVE_LOCAL_PDF=false" \
+            --set-env-vars="GO_ENV=production" \
             --set-secrets="GOOGLE_DRIVE_FOLDER_ID=google-drive-folder-id:latest" \
             --set-secrets="GOOGLE_SERVICE_ACCOUNT_KEY=google-drive-service-key:latest" \
             --set-secrets="JWT_SECRET=jwt-secret:latest" \
