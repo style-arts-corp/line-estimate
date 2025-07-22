@@ -27,10 +27,11 @@ services:
       - PORT=8080
       - DATABASE_URL=postgres://user:password@postgres:5432/line_estimate?sslmode=disable
       - JWT_SECRET=your-super-secret-jwt-key-change-this-in-production
+      - GO_ENV=production
       # Google Drive Configuration
       - GOOGLE_SERVICE_ACCOUNT_KEY=/app/disposal-estimate-a107e828d351.json
       - GOOGLE_DRIVE_FOLDER_ID=1X0IQJWG6Ss47skLDgH_xkJGRGXmuE7Kf
-      - SAVE_LOCAL_PDF=false
+      - SAVE_LOCAL_PDF=true
       # SSL/TLS settings for Google API
       - SSL_CERT_DIR=/etc/ssl/certs
       - CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt
@@ -53,9 +54,7 @@ services:
     ports:
       - "13000:3000"
     environment:
-      - NEXT_PUBLIC_API_URL=http://backend:8080/api/v1
-    depends_on:
-      - backend
+      - NEXT_PUBLIC_API_URL=http://localhost:18080
     networks:
       - line-estimate-network
     # 開発環境では volumes を有効化
