@@ -12,8 +12,6 @@ export default function ConfirmationPage() {
   const { state } = useAppContext()
   const [quoteGenerated, setQuoteGenerated] = useState(false)
 
-  const QUOTE_URL = 'https://drive.google.com/file/d/1PjaDRt3vvEs4wBPKz0JMaTzcmMLrKPOl/view?usp=drive_link'
-
   useEffect(() => {
     // quoteGenerated 状態を Context から取得
     setQuoteGenerated(state.quoteGenerated)
