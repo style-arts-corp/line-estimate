@@ -60,22 +60,6 @@ definitions:
         description: TEL
         type: string
     type: object
-  models.PDFCompanyInfo:
-    properties:
-      address:
-        type: string
-      company_name:
-        type: string
-      fax:
-        type: string
-      postal_code:
-        type: string
-      seal:
-        description: path to seal image
-        type: string
-      tel:
-        type: string
-    type: object
   models.PDFContractorInfo:
     properties:
       address:
@@ -94,55 +78,14 @@ definitions:
         description: TEL
         type: string
     type: object
-  models.PDFCustomerInfo:
-    properties:
-      address:
-        type: string
-      company_name:
-        type: string
-      fax:
-        type: string
-      postal_code:
-        type: string
-      tel:
-        type: string
-    type: object
-  models.PDFEstimate:
+  models.PDFEstimateRequest:
     properties:
       customer:
-        $ref: '#/definitions/models.PDFCustomerInfo'
-      estimate_no:
-        type: string
-      issue_date:
-        type: string
-      issuer:
-        $ref: '#/definitions/models.PDFCompanyInfo'
+        $ref: '#/definitions/models.PDFRequestCustomer'
       items:
         items:
-          $ref: '#/definitions/models.PDFLineItem'
+          $ref: '#/definitions/models.PDFRequestItem'
         type: array
-      payment_terms:
-        type: string
-      recipient:
-        description: 佐藤 様
-        type: string
-      remarks:
-        items:
-          type: string
-        type: array
-      sub_total:
-        type: number
-      tax:
-        type: number
-      tax_rate:
-        type: number
-      title:
-        type: string
-      total:
-        type: number
-      valid_period:
-        description: days
-        type: integer
     type: object
   models.PDFInstruction:
     properties:
@@ -171,17 +114,28 @@ definitions:
         - $ref: '#/definitions/models.PDFWorkDetails'
         description: 作業詳細
     type: object
-  models.PDFLineItem:
+  models.PDFRequestCustomer:
+    properties:
+      address:
+        type: string
+      disposalDate:
+        type: string
+      email:
+        type: string
+      name:
+        type: string
+      phone:
+        type: string
+    type: object
+  models.PDFRequestItem:
     properties:
       amount:
         type: number
-      description:
+      customPrice:
+        type: number
+      id:
         type: string
       quantity:
-        type: number
-      unit:
-        type: string
-      unit_price:
         type: number
     type: object
   models.PDFWorkDetails:
@@ -461,7 +415,7 @@ paths:
         name: estimate
         required: true
         schema:
-          $ref: '#/definitions/models.PDFEstimate'
+          $ref: '#/definitions/models.PDFEstimateRequest'
       produces:
       - application/pdf
       responses:

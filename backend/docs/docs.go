@@ -174,7 +174,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/models.PDFEstimate"
+                            "$ref": "#/definitions/models.PDFEstimateRequest"
                         }
                     }
                 ],
@@ -635,30 +635,6 @@ const docTemplate = `{
                 }
             }
         },
-        "models.PDFCompanyInfo": {
-            "type": "object",
-            "properties": {
-                "address": {
-                    "type": "string"
-                },
-                "company_name": {
-                    "type": "string"
-                },
-                "fax": {
-                    "type": "string"
-                },
-                "postal_code": {
-                    "type": "string"
-                },
-                "seal": {
-                    "description": "path to seal image",
-                    "type": "string"
-                },
-                "tel": {
-                    "type": "string"
-                }
-            }
-        },
         "models.PDFContractorInfo": {
             "type": "object",
             "properties": {
@@ -684,78 +660,17 @@ const docTemplate = `{
                 }
             }
         },
-        "models.PDFCustomerInfo": {
-            "type": "object",
-            "properties": {
-                "address": {
-                    "type": "string"
-                },
-                "company_name": {
-                    "type": "string"
-                },
-                "fax": {
-                    "type": "string"
-                },
-                "postal_code": {
-                    "type": "string"
-                },
-                "tel": {
-                    "type": "string"
-                }
-            }
-        },
-        "models.PDFEstimate": {
+        "models.PDFEstimateRequest": {
             "type": "object",
             "properties": {
                 "customer": {
-                    "$ref": "#/definitions/models.PDFCustomerInfo"
-                },
-                "estimate_no": {
-                    "type": "string"
-                },
-                "issue_date": {
-                    "type": "string"
-                },
-                "issuer": {
-                    "$ref": "#/definitions/models.PDFCompanyInfo"
+                    "$ref": "#/definitions/models.PDFRequestCustomer"
                 },
                 "items": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/models.PDFLineItem"
+                        "$ref": "#/definitions/models.PDFRequestItem"
                     }
-                },
-                "payment_terms": {
-                    "type": "string"
-                },
-                "recipient": {
-                    "description": "佐藤 様",
-                    "type": "string"
-                },
-                "remarks": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "sub_total": {
-                    "type": "number"
-                },
-                "tax": {
-                    "type": "number"
-                },
-                "tax_rate": {
-                    "type": "number"
-                },
-                "title": {
-                    "type": "string"
-                },
-                "total": {
-                    "type": "number"
-                },
-                "valid_period": {
-                    "description": "days",
-                    "type": "integer"
                 }
             }
         },
@@ -805,22 +720,39 @@ const docTemplate = `{
                 }
             }
         },
-        "models.PDFLineItem": {
+        "models.PDFRequestCustomer": {
+            "type": "object",
+            "properties": {
+                "address": {
+                    "type": "string"
+                },
+                "disposalDate": {
+                    "type": "string"
+                },
+                "email": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "phone": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.PDFRequestItem": {
             "type": "object",
             "properties": {
                 "amount": {
                     "type": "number"
                 },
-                "description": {
+                "customPrice": {
+                    "type": "number"
+                },
+                "id": {
                     "type": "string"
                 },
                 "quantity": {
-                    "type": "number"
-                },
-                "unit": {
-                    "type": "string"
-                },
-                "unit_price": {
                     "type": "number"
                 }
             }
@@ -970,6 +902,8 @@ var SwaggerInfo = &swag.Spec{
 	Description:      "見積もり管理システムのAPI",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
+	LeftDelim:        "{{",
+	RightDelim:       "}}",
 }
 
 func init() {
