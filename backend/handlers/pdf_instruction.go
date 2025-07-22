@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"bytes"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -100,9 +101,9 @@ func GenerateInstructionPDF(instruction *models.PDFInstruction) (*gopdf.GoPdf, e
 // @Description 指示書情報からPDFを生成します
 // @Tags Instructions
 // @Accept json
-// @Produce json
+// @Produce application/pdf
 // @Param instruction body models.PDFInstruction true "指示書情報"
-// @Success 200 {object} utils.Response
+// @Success 200 {file} binary
 // @Failure 400 {object} utils.ErrorResponse
 // @Failure 500 {object} utils.ErrorResponse
 // @Router /api/v1/instructions/pdf [post]
@@ -120,30 +121,27 @@ func CreateInstructionPDF(c *gin.Context) {
 		return
 	}
 
-	// Create pdfs directory if it doesn't exist
-	pdfDir := "./pdfs"
-	if err := os.MkdirAll(pdfDir, 0755); err != nil {
-		utils.SendErrorResponse(c, 500, "PDFディレクトリの作成に失敗しました")
+	// Convert PDF to bytes
+	var buf bytes.Buffer
+	if err := pdf.Write(&buf); err != nil {
+		utils.SendErrorResponse(c, 500, "PDFの出力に失敗しました: "+err.Error())
 		return
 	}
 
-	// Generate unique filename with timestamp
+	// Optionally save to Google Drive (if implemented)
+	// TODO: Implement Google Drive save functionality
+
+	// Generate filename for Content-Disposition header
 	timestamp := time.Now().Format("20060102_150405")
 	filename := fmt.Sprintf("instruction_%s_%s.pdf", instruction.InstructionNo, timestamp)
-	filepath := filepath.Join(pdfDir, filename)
 
-	// Save the PDF
-	if err := pdf.WritePdf(filepath); err != nil {
-		utils.SendErrorResponse(c, 500, "PDFの保存に失敗しました: "+err.Error())
-		return
-	}
+	// Set response headers
+	c.Header("Content-Type", "application/pdf")
+	c.Header("Content-Disposition", fmt.Sprintf("attachment; filename=%s", filename))
+	c.Header("Content-Length", fmt.Sprintf("%d", buf.Len()))
 
-	// Return success response
-	utils.SuccessResponse(c, gin.H{
-		"message":  "指示書PDFが正常に作成されました",
-		"filename": filename,
-		"filepath": filepath,
-	})
+	// Return PDF binary data
+	c.Data(200, "application/pdf", buf.Bytes())
 }
 
 // CreateTestInstructionPDF godoc
@@ -151,8 +149,8 @@ func CreateInstructionPDF(c *gin.Context) {
 // @Description 開発用のテスト指示書PDFを生成します
 // @Tags Development
 // @Accept json
-// @Produce json
-// @Success 200 {object} utils.Response
+// @Produce application/pdf
+// @Success 200 {file} binary
 // @Failure 500 {object} utils.ErrorResponse
 // @Router /dev/create-instruction-pdf [get]
 func CreateTestInstructionPDF(c *gin.Context) {

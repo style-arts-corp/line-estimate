@@ -331,7 +331,7 @@
                     "application/json"
                 ],
                 "produces": [
-                    "application/json"
+                    "application/pdf"
                 ],
                 "tags": [
                     "Instructions"
@@ -352,7 +352,7 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/utils.Response"
+                            "type": "file"
                         }
                     },
                     "400": {
@@ -450,7 +450,7 @@
                     "application/json"
                 ],
                 "produces": [
-                    "application/json"
+                    "application/pdf"
                 ],
                 "tags": [
                     "Development"
@@ -460,7 +460,7 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/utils.Response"
+                            "type": "file"
                         }
                     },
                     "500": {
