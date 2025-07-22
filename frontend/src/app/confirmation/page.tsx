@@ -5,10 +5,11 @@ import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { FileText, FileOutput, ExternalLink } from 'lucide-react'
 import { useAppContext } from '@/contexts/AppContext'
+import {usePostApiV1EstimatesPdf} from '@/orval/generated/estimates/estimates'
 
 export default function ConfirmationPage() {
   const router = useRouter()
-  const { state, dispatch } = useAppContext()
+  const { state } = useAppContext()
   const [quoteGenerated, setQuoteGenerated] = useState(false)
 
   const QUOTE_URL = 'https://drive.google.com/file/d/1PjaDRt3vvEs4wBPKz0JMaTzcmMLrKPOl/view?usp=drive_link'
@@ -18,13 +19,44 @@ export default function ConfirmationPage() {
     setQuoteGenerated(state.quoteGenerated)
   }, [state.quoteGenerated])
 
-  const handleGenerateQuote = () => {
-    setQuoteGenerated(true)
-    dispatch({ type: 'SET_QUOTE_GENERATED', payload: true })
+  const { mutate: generateEstimatePDF, isPending: isGenerating, error } = usePostApiV1EstimatesPdf()
+
+  const handleGenerateQuote = async () => {
+      // 見積書データを準備
+        const customer=  {
+          name: state.customerInfo.name || '顧客名未設定',
+          address: state.customerInfo.address || '住所未設定',
+          phone: state.customerInfo.phone || '電話番号未設定',
+          email: state.customerInfo.email || 'メール未設定',
+          disposalDate: state.customerInfo.disposalDate || '廃棄予定日未設定',
+        }
+        const items= state.selectedItems.map(item => ({
+          id: item.name, // id
+          quantity: item.quantity, //数量
+          customPrice: item.customPrice, // 単価
+          amount: item.customPrice * item.quantity // 小計
+        }))
+
+      // カスタムクライアントを使用してAPIを呼び出す
+      generateEstimatePDF({
+        data: {
+          customer,
+          items
+        }
+      },{
+        onSuccess: (data) => {
+          console.log(data)
+        },
+        onError: (error) => {
+          console.error(error)
+        }
+      })
   }
 
   const handleNavigateToQuote = () => {
-    window.open(QUOTE_URL, '_blank')
+    // APIから返されたPDFのURLを使用、なければデフォルトURL
+    // window.open(pdfUrl || QUOTE_URL, '_blank')
+    alert("PDFへ遷移する")
   }
 
   const handleNavigateToInstructions = () => {
@@ -105,13 +137,21 @@ export default function ConfirmationPage() {
           </div>
         </div>
 
+        {error != null && (
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-700 mb-4">
+            {/* TODO: 適切に処理する */}
+            エラーが発生しました。
+          </div>
+        )}
+
         <div className="flex flex-col space-y-4">
           {!quoteGenerated ? (
             <button
               onClick={handleGenerateQuote}
-              className="w-full px-6 py-3 bg-blue-600 text-white font-medium rounded-md hover:bg-blue-700 transition-colors"
+              disabled={isGenerating}
+              className="w-full px-6 py-3 bg-blue-600 text-white font-medium rounded-md hover:bg-blue-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
             >
-              見積書生成
+              {isGenerating ? '生成中...' : '見積書生成'}
             </button>
           ) : (
             <>
