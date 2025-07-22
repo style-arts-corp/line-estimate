@@ -1,5 +1,42 @@
 basePath: /
 definitions:
+  handlers.CategoryResponse:
+    properties:
+      id:
+        type: string
+      items:
+        items:
+          $ref: '#/definitions/handlers.Item'
+        type: array
+      name:
+        type: string
+    type: object
+  handlers.GetCategoriesResponse:
+    properties:
+      categories:
+        items:
+          $ref: '#/definitions/handlers.CategoryResponse'
+        type: array
+      items:
+        items:
+          $ref: '#/definitions/handlers.Item'
+        type: array
+      sorted:
+        type: boolean
+      source:
+        type: string
+    type: object
+  handlers.Item:
+    properties:
+      category:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      price:
+        type: integer
+    type: object
   models.CreateEstimateRequest:
     properties:
       description:
@@ -249,10 +286,10 @@ paths:
       - application/json
       description: 商品カテゴリーとアイテムの一覧を取得します
       parameters:
-      - description: ひらがなでソートするかどうか
+      - description: ひらがなでソートするかどうか (true/false)
         in: query
         name: sort
-        type: boolean
+        type: string
       produces:
       - application/json
       responses:
@@ -263,8 +300,7 @@ paths:
             - $ref: '#/definitions/utils.Response'
             - properties:
                 data:
-                  additionalProperties: true
-                  type: object
+                  $ref: '#/definitions/handlers.GetCategoriesResponse'
               type: object
       summary: カテゴリー一覧を取得
       tags:

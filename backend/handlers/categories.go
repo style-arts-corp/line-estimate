@@ -27,14 +27,22 @@ type Item struct {
 	Hiragana string `json:"-"` // Internal field for sorting, not exposed in JSON
 }
 
+// GetCategoriesResponse represents the response for the GetCategories endpoint
+type GetCategoriesResponse struct {
+	Categories []CategoryResponse `json:"categories,omitempty"`
+	Items      []Item             `json:"items,omitempty"`
+	Source     string             `json:"source"`
+	Sorted     bool               `json:"sorted"`
+}
+
 // GetCategories godoc
 // @Summary カテゴリー一覧を取得
 // @Description 商品カテゴリーとアイテムの一覧を取得します
 // @Tags Categories
 // @Accept json
 // @Produce json
-// @Param sort query bool false "ひらがなでソートするかどうか"
-// @Success 200 {object} utils.Response{data=map[string]interface{}}
+// @Param sort query string false "ひらがなでソートするかどうか (true/false)"
+// @Success 200 {object} utils.Response{data=GetCategoriesResponse}
 // @Router /api/v1/categories [get]
 func GetCategories(c *gin.Context) {
 	// Check if sort parameter is provided

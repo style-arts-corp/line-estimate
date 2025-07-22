@@ -286,10 +286,10 @@ paths:
       - application/json
       description: 商品カテゴリーとアイテムの一覧を取得します
       parameters:
-      - description: ひらがなでソートするかどうか
+      - description: ひらがなでソートするかどうか (true/false)
         in: query
         name: sort
-        type: boolean
+        type: string
       produces:
       - application/json
       responses:

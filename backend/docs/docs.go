@@ -39,8 +39,8 @@ const docTemplate = `{
                 "summary": "カテゴリー一覧を取得",
                 "parameters": [
                     {
-                        "type": "boolean",
-                        "description": "ひらがなでソートするかどうか",
+                        "type": "string",
+                        "description": "ひらがなでソートするかどうか (true/false)",
                         "name": "sort",
                         "in": "query"
                     }
@@ -57,8 +57,7 @@ const docTemplate = `{
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "type": "object",
-                                            "additionalProperties": true
+                                            "$ref": "#/definitions/handlers.GetCategoriesResponse"
                                         }
                                     }
                                 }
@@ -548,6 +547,63 @@ const docTemplate = `{
         }
     },
     "definitions": {
+        "handlers.CategoryResponse": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/handlers.Item"
+                    }
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "handlers.GetCategoriesResponse": {
+            "type": "object",
+            "properties": {
+                "categories": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/handlers.CategoryResponse"
+                    }
+                },
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/handlers.Item"
+                    }
+                },
+                "sorted": {
+                    "type": "boolean"
+                },
+                "source": {
+                    "type": "string"
+                }
+            }
+        },
+        "handlers.Item": {
+            "type": "object",
+            "properties": {
+                "category": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "price": {
+                    "type": "integer"
+                }
+            }
+        },
         "models.CreateEstimateRequest": {
             "type": "object",
             "required": [
