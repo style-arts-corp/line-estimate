@@ -1,7 +1,7 @@
 export default {
   lineEstimateApi: {
     input: {
-      target: './openapi.yaml',
+      target: './swagger.yaml',
     },
     output: {
       mode: 'tags-split',

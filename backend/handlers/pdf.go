@@ -4,6 +4,7 @@ import (
 	"bytes"
 	_ "embed"
 	"fmt"
+	"math"
 	"os"
 	"path/filepath"
 	"time"
@@ -125,17 +126,58 @@ func GenerateEstimatePDF(estimate *models.PDFEstimate) (*gopdf.GoPdf, error) {
 // @Tags Estimates
 // @Accept json
 // @Produce application/pdf
-// @Param estimate body models.PDFEstimate true "見積もり情報"
+// @Param estimate body models.PDFEstimateRequest true "見積もり情報"
 // @Success 200 {file} binary
 // @Failure 400 {object} utils.ErrorResponse
 // @Failure 500 {object} utils.ErrorResponse
 // @Router /api/v1/estimates/pdf [post]
 func CreateEstimatePDF(c *gin.Context) {
-	var estimate models.PDFEstimate
-	if err := c.ShouldBindJSON(&estimate); err != nil {
+	var request models.PDFEstimateRequest
+	if err := c.ShouldBindJSON(&request); err != nil {
 		utils.SendErrorResponse(c, 400, "無効なリクエストデータ: "+err.Error())
 		return
 	}
+
+	// Convert request to PDFEstimate format
+	now := time.Now().In(time.FixedZone("JST", 9*60*60))
+	estimate := models.PDFEstimate{
+		EstimateNo: fmt.Sprintf("EST-%s-%03d", now.Format("20060102"), 1),
+		IssueDate:  now,
+		Customer: models.PDFCustomerInfo{
+			CompanyName: request.Customer.Name,
+			PostalCode:  "000-0000", // デフォルト値
+			Address:     request.Customer.Address,
+			Tel:         request.Customer.Phone,
+			Fax:         "", // デフォルト値
+		},
+		Recipient: request.Customer.Name + " 様",
+		Title:     "廃棄物処理に関する見積書",
+		Items:     []models.PDFLineItem{},
+		Remarks: []string{
+			"※お見積もりの有効期限は発行日より1ヶ月となります。",
+			"※実際の廃棄物量により金額が変更となる場合がございます。",
+			"※お支払い条件：作業完了後、請求書発行日より30日以内",
+		},
+	}
+
+	// Convert items
+	var subTotal float64
+	for _, item := range request.Items {
+		pdfItem := models.PDFLineItem{
+			Description: item.ID,
+			Quantity:    item.Quantity,
+			UnitPrice:   item.CustomPrice,
+			Amount:      item.Amount,
+		}
+		estimate.Items = append(estimate.Items, pdfItem)
+		subTotal += item.Amount
+	}
+
+	// Calculate totals
+	estimate.SubTotal = subTotal
+	estimate.TaxRate = 0.10
+	estimate.Tax = math.Floor(subTotal * estimate.TaxRate)
+	estimate.Total = subTotal + estimate.Tax
 
 	// Generate PDF
 	pdf, err := GenerateEstimatePDF(&estimate)
