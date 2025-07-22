@@ -11,15 +11,16 @@ import { customerInfoSchema } from '@/lib/validation'
 import { useAppContext } from '@/contexts/AppContext'
 import type { Item, CustomerInfo, Category } from '@/lib/types'
 import { useGetApiV1Categories } from '@/orval/generated/categories/categories'
-import { Category as ApiCategory } from '@/orval/generated/model/category'
+import { GetApiV1Categories200AllOf } from '@/orval/generated/model/getApiV1Categories200AllOf'
 
+type ApiCategory = NonNullable<NonNullable<GetApiV1Categories200AllOf['data']>["categories"]>[number]
 
 // APIレスポンスをアプリケーションの型に変換
 const mapApiCategoriesToAppCategories = (apiCategories: ApiCategory[]): Category[] => {
   return apiCategories.map(cat => ({
     id: cat.id || '',
     name: cat.name || '',
-    items: (cat.items || []).map((item: NonNullable<ApiCategory["items"]>[number]) => ({
+    items: (cat.items || []).map((item: NonNullable<NonNullable<ApiCategory>["items"]>[number]) => ({
       id: item.id || '',
       name: item.name || '',
       price: item.price || 0,
