@@ -197,7 +197,37 @@ func CreateEstimatePDF(c *gin.Context) {
 		return
 	}
 
-	// PDFファイルを直接レスポンスとして返す
+	// Check if local save mode
+	saveLocal := os.Getenv("SAVE_LOCAL_PDF")
+
+	if saveLocal == "true" {
+		// ローカル保存
+		pdfDir := "./pdfs"
+		if err := os.MkdirAll(pdfDir, 0755); err != nil {
+			utils.SendErrorResponse(c, 500, "PDFディレクトリの作成に失敗しました: "+err.Error())
+			return
+		}
+		localPath := filepath.Join(pdfDir, filename)
+		if err := pdf.WritePdf(localPath); err != nil {
+			utils.SendErrorResponse(c, 500, "PDFのローカル保存に失敗しました: "+err.Error())
+			return
+		}
+	} else {
+		// Google Driveにアップロード
+		driveService, err := services.NewDriveService()
+		if err != nil {
+			utils.SendErrorResponse(c, 500, "Google Driveサービスの初期化に失敗しました: "+err.Error())
+			return
+		}
+
+		_, err = driveService.UploadFile(filename, "application/pdf", buf.Bytes())
+		if err != nil {
+			utils.SendErrorResponse(c, 500, "Google Driveへのアップロードに失敗しました: "+err.Error())
+			return
+		}
+	}
+
+	// 保存処理の後、常にPDFファイルを直接レスポンスとして返す
 	c.Header("Content-Type", "application/pdf")
 	c.Header("Content-Disposition", fmt.Sprintf("attachment; filename=%s", filename))
 	c.Header("Content-Length", fmt.Sprintf("%d", buf.Len()))
@@ -269,11 +299,18 @@ func CreatePDF(c *gin.Context) {
 	timestamp := time.Now().Format("20060102_150405")
 	filename := fmt.Sprintf("test_estimate_%s.pdf", timestamp)
 
-	// Check if local save only mode
+	// PDFをバイト配列に変換
+	var buf bytes.Buffer
+	if err := pdf.Write(&buf); err != nil {
+		utils.SendErrorResponse(c, 500, "PDFの書き込みに失敗しました: "+err.Error())
+		return
+	}
+
+	// Check if local save mode
 	saveLocal := os.Getenv("SAVE_LOCAL_PDF")
 
 	if saveLocal == "true" {
-		// ローカル保存のみ
+		// ローカル保存
 		pdfDir := "./pdfs"
 		if err := os.MkdirAll(pdfDir, 0755); err != nil {
 			utils.SendErrorResponse(c, 500, "PDFディレクトリの作成に失敗しました: "+err.Error())
@@ -284,42 +321,24 @@ func CreatePDF(c *gin.Context) {
 			utils.SendErrorResponse(c, 500, "PDFのローカル保存に失敗しました: "+err.Error())
 			return
 		}
+	} else {
+		// Google Driveにアップロード
+		driveService, err := services.NewDriveService()
+		if err != nil {
+			utils.SendErrorResponse(c, 500, "Google Driveサービスの初期化に失敗しました: "+err.Error())
+			return
+		}
 
-		// Return success response for local save
-		utils.SuccessResponse(c, gin.H{
-			"message":    "テスト見積書PDFがローカルに正常に作成されました",
-			"filename":   filename,
-			"local_path": localPath,
-		})
-		return
+		_, err = driveService.UploadFile(filename, "application/pdf", buf.Bytes())
+		if err != nil {
+			utils.SendErrorResponse(c, 500, "Google Driveへのアップロードに失敗しました: "+err.Error())
+			return
+		}
 	}
 
-	// PDFをバイト配列に変換（Google Drive保存の場合のみ）
-	var buf bytes.Buffer
-	if err := pdf.Write(&buf); err != nil {
-		utils.SendErrorResponse(c, 500, "PDFの書き込みに失敗しました: "+err.Error())
-		return
-	}
-
-	// Google Driveサービスを初期化
-	driveService, err := services.NewDriveService()
-	if err != nil {
-		utils.SendErrorResponse(c, 500, "Google Driveサービスの初期化に失敗しました: "+err.Error())
-		return
-	}
-
-	// Google Driveにアップロード
-	uploadedFile, err := driveService.UploadFile(filename, "application/pdf", buf.Bytes())
-	if err != nil {
-		utils.SendErrorResponse(c, 500, "Google Driveへのアップロードに失敗しました: "+err.Error())
-		return
-	}
-
-	// Return success response
-	utils.SuccessResponse(c, gin.H{
-		"message":       "テスト見積書PDFが正常に作成されました",
-		"filename":      filename,
-		"drive_file_id": uploadedFile.Id,
-		"drive_url":     fmt.Sprintf("https://drive.google.com/file/d/%s/view", uploadedFile.Id),
-	})
+	// 保存処理の後、常にPDFファイルを直接レスポンスとして返す
+	c.Header("Content-Type", "application/pdf")
+	c.Header("Content-Disposition", fmt.Sprintf("attachment; filename=%s", filename))
+	c.Header("Content-Length", fmt.Sprintf("%d", buf.Len()))
+	c.Data(200, "application/pdf", buf.Bytes())
 }

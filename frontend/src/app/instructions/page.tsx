@@ -4,19 +4,32 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useForm } from '@tanstack/react-form'
 import Image from 'next/image'
-import { FileText, Save, ArrowLeft, Check, ClipboardList, ExternalLink } from 'lucide-react'
+import { FileText, Save, ArrowLeft, Check, ExternalLink, AlertCircle } from 'lucide-react'
 import { instructionsSchema, type InstructionsForm } from '@/lib/validation'
 import { useAppContext } from '@/contexts/AppContext'
+import { usePostApiV1InstructionsPdf, type PostApiV1InstructionsPdfMutationBody } from '@/orval/generated/instructions/instructions'
 
 export default function InstructionsPage() {
   const router = useRouter()
   const { state, dispatch } = useAppContext()
   const [instructionsSaved, setInstructionsSaved] = useState(false)
+  const [pdfBlob, setPdfBlob] = useState<Blob | null>(null)
+  const [pdfUrl, setPdfUrl] = useState<string | null>(null)
 
-  const INSTRUCTIONS_URL =
-    'https://docs.google.com/spreadsheets/d/1GwyUeSqpHi7qYJTYmyB2SswIkfp388pMyq9bgfKG9Jw/edit?usp=drive_link'
-  const QUOTE_URL = 'https://drive.google.com/file/d/1PjaDRt3vvEs4wBPKz0JMaTzcmMLrKPOl/view?usp=drive_link'
+  // PDFのBlobからオブジェクトURLを作成
+  useEffect(() => {
+    if (pdfBlob) {
+      const url = URL.createObjectURL(pdfBlob)
+      setPdfUrl(url)
 
+      return () => {
+        URL.revokeObjectURL(url)
+      }
+    }
+  }, [pdfBlob])
+
+    
+  const { mutate: generateInstructionPDF, isPending: isGenerating, error: pdfError } = usePostApiV1InstructionsPdf()
   const form = useForm({
     defaultValues: {
       collectionDate: state.collectionDate,
@@ -42,25 +55,66 @@ export default function InstructionsPage() {
       dispatch({ type: 'SET_T_POINT_AVAILABLE', payload: value.tPointAvailable })
       dispatch({ type: 'SET_T_POINT_USAGE', payload: value.tPointUsage })
       dispatch({ type: 'SET_INSTRUCTIONS_SAVED', payload: true })
-      setInstructionsSaved(true)
     },
   })
 
-  useEffect(() => {
-    // instructionsSaved 状態を Context から取得
-    setInstructionsSaved(state.instructionsSaved)
-  }, [state.instructionsSaved])
-
-  const handleSaveInstructions = () => {
-    form.handleSubmit()
-  }
+  // useEffect(() => {
+  //   // instructionsSaved 状態を Context から取得
+  //   setInstructionsSaved(state.instructionsSaved)
+  // }, [state.instructionsSaved])
 
   const handleNavigateToQuote = () => {
-    window.open(QUOTE_URL, '_blank')
+    if (pdfUrl) {
+      // 新しいタブでPDFを開く
+      window.open(pdfUrl, '_blank')
+    } else {
+      alert("PDFが生成されていません")
+    }
   }
 
-  const handleNavigateToInstructions = () => {
-    window.open(INSTRUCTIONS_URL, '_blank')
+  const handleGenerateInstructionPDF = () => {
+    const instructionData: PostApiV1InstructionsPdfMutationBody = {
+      instruction_no: `INS-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}-${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}`,
+      issue_date: new Date().toISOString(),
+      contractor: {
+        recipient: "受付済",
+        name: state.customerInfo.name,
+        address: state.customerInfo.address,
+        person: state.customerInfo.name,
+        tel: state.customerInfo.phone
+      },
+      collector: {
+        recipient: "受付済",
+        name: state.customerInfo.name,
+        address: state.customerInfo.address,
+        person: state.customerInfo.name,
+        tel: state.customerInfo.phone
+      },
+      items: state.selectedItems.map(item => ({
+        description: `${item.name} x${item.quantity}`
+      })),
+      memo: state.notes || `収集日: ${state.collectionDate}`,
+      work_details: {
+        contractor: "A-123",
+        amount: state.collectionAmountTaxIncluded.toString(),
+        manifest: "B-456",
+        manifest_type: "産廃",
+        no_recycling_fee: !state.recycleTicket,
+        extra_points: state.tPointAvailable
+      }
+    }
+    generateInstructionPDF({
+      data: instructionData
+    }, {
+      onSuccess: (data) => {
+        console.log('PDF data received:', data)
+        setPdfBlob(data as Blob)
+        setInstructionsSaved(true)
+      },
+      onError: (error) => {
+        console.error('PDF生成エラー:', error)
+      }
+    })
   }
 
   return (
@@ -433,49 +487,84 @@ export default function InstructionsPage() {
           </div>
         </div>
 
+        {pdfError && (
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-700 mb-4">
+            <div className="flex items-center">
+              <AlertCircle className="h-5 w-5 mr-2" />
+              <div>
+                <div className="font-medium">エラーが発生しました</div>
+                <div className="text-sm mt-1">
+                  PDFの生成に失敗しました。しばらく待ってから再度お試しください。
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         <div className="flex flex-col space-y-4">
-          {instructionsSaved ? (
+          {!instructionsSaved ? (
+            <form.Subscribe
+              selector={(state) => [state.canSubmit]}
+            >
+              {([canSubmit]) => (
+                <button
+                  onClick={async () => {
+                    // フォームの値を直接取得して状態を更新
+                    const formValues = form.state.values
+                    dispatch({ type: 'SET_COLLECTION_DATE', payload: formValues.collectionDate })
+                    dispatch({ type: 'SET_NOTES', payload: formValues.notes || '' })
+                    dispatch({ type: 'SET_WORK_SLIP', payload: formValues.workSlip })
+                    dispatch({ type: 'SET_WEIGHING', payload: formValues.weighing })
+                    dispatch({ type: 'SET_MANIFEST', payload: formValues.manifest })
+                    dispatch({ type: 'SET_RECYCLE_TICKET', payload: formValues.recycleTicket })
+                    dispatch({ type: 'SET_COLLECTION_AMOUNT_TAX_INCLUDED', payload: formValues.collectionAmountTaxIncluded })
+                    dispatch({ type: 'SET_COLLECTION_AMOUNT_TAX_EXCLUDED', payload: formValues.collectionAmountTaxExcluded })
+                    dispatch({ type: 'SET_T_POINT_AVAILABLE', payload: formValues.tPointAvailable })
+                    dispatch({ type: 'SET_T_POINT_USAGE', payload: formValues.tPointUsage })
+                    dispatch({ type: 'SET_INSTRUCTIONS_SAVED', payload: true })
+                    
+                    // PDF生成
+                    handleGenerateInstructionPDF()
+                  }}
+                  disabled={!canSubmit || isGenerating}
+                  className="w-full px-6 py-3 bg-blue-600 text-white font-medium rounded-md hover:bg-blue-700 transition-colors flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <Save className="mr-2 h-5 w-5" />
+                  {isGenerating ? '生成中...' : '指示書生成'}
+                </button>
+              )}
+            </form.Subscribe>
+          ) : (
             <>
               <div className="bg-green-50 border border-green-200 rounded-lg p-4 text-green-700 mb-4">
                 <div className="flex items-center">
                   <Check className="h-5 w-5 mr-2" />
-                  指示書が保存されました。次のステップに進んでください。
+                  指示書が生成されました。以下のオプションから選択してください。
                 </div>
               </div>
 
               <button
-                onClick={handleNavigateToInstructions}
+                onClick={handleNavigateToQuote}
                 className="w-full px-6 py-3 bg-blue-600 text-white font-medium rounded-md hover:bg-blue-700 transition-colors flex items-center justify-center"
               >
-                <ClipboardList className="mr-2 h-5 w-5" />
-                指示書へ遷移
+                <FileText className="mr-2 h-5 w-5" />
+                指示書を新しいタブで開く
                 <ExternalLink className="ml-2 h-4 w-4" />
               </button>
 
-              <button
-                onClick={handleNavigateToQuote}
-                className="w-full px-6 py-3 border border-gray-300 text-gray-700 font-medium rounded-md hover:bg-gray-50 transition-colors flex items-center justify-center"
-              >
-                <FileText className="mr-2 h-5 w-5" />
-                見積書へ遷移
-                <ExternalLink className="ml-2 h-4 w-4" />
-              </button>
-            </>
-          ) : (
-            <form.Subscribe
-              selector={(state) => [state.canSubmit, state.isSubmitting]}
-            >
-              {([canSubmit, isSubmitting]) => (
-                <button
-                  onClick={handleSaveInstructions}
-                  disabled={!canSubmit}
-                  className="w-full px-6 py-3 bg-blue-600 text-white font-medium rounded-md hover:bg-blue-700 transition-colors flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <Save className="mr-2 h-5 w-5" />
-                  {isSubmitting ? '保存中...' : '指示書を保存'}
-                </button>
+              {pdfUrl && (
+                <div className="mt-4 border border-gray-300 rounded-lg overflow-hidden">
+                  <div className="bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700">
+                    指示書プレビュー
+                  </div>
+                  <iframe
+                    src={pdfUrl}
+                    className="w-full h-96"
+                    title="指示書PDF"
+                  />
+                </div>
               )}
-            </form.Subscribe>
+            </>
           )}
 
           <button

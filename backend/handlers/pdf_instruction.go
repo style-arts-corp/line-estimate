@@ -10,6 +10,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/signintech/gopdf"
 	"line-estimate-backend/models"
+	"line-estimate-backend/services"
 	"line-estimate-backend/utils"
 )
 
@@ -128,19 +129,44 @@ func CreateInstructionPDF(c *gin.Context) {
 		return
 	}
 
-	// Optionally save to Google Drive (if implemented)
-	// TODO: Implement Google Drive save functionality
-
 	// Generate filename for Content-Disposition header
 	timestamp := time.Now().Format("20060102_150405")
 	filename := fmt.Sprintf("instruction_%s_%s.pdf", instruction.InstructionNo, timestamp)
 
-	// Set response headers
+	// Check if local save mode
+	saveLocal := os.Getenv("SAVE_LOCAL_PDF")
+
+	if saveLocal == "true" {
+		// ローカル保存
+		pdfDir := "./pdfs"
+		if err := os.MkdirAll(pdfDir, 0755); err != nil {
+			utils.SendErrorResponse(c, 500, "PDFディレクトリの作成に失敗しました: "+err.Error())
+			return
+		}
+		localPath := filepath.Join(pdfDir, filename)
+		if err := pdf.WritePdf(localPath); err != nil {
+			utils.SendErrorResponse(c, 500, "PDFのローカル保存に失敗しました: "+err.Error())
+			return
+		}
+	} else {
+		// Google Driveにアップロード
+		driveService, err := services.NewDriveService()
+		if err != nil {
+			utils.SendErrorResponse(c, 500, "Google Driveサービスの初期化に失敗しました: "+err.Error())
+			return
+		}
+
+		_, err = driveService.UploadFile(filename, "application/pdf", buf.Bytes())
+		if err != nil {
+			utils.SendErrorResponse(c, 500, "Google Driveへのアップロードに失敗しました: "+err.Error())
+			return
+		}
+	}
+
+	// 保存処理の後、常にPDFファイルを直接レスポンスとして返す
 	c.Header("Content-Type", "application/pdf")
 	c.Header("Content-Disposition", fmt.Sprintf("attachment; filename=%s", filename))
 	c.Header("Content-Length", fmt.Sprintf("%d", buf.Len()))
-
-	// Return PDF binary data
 	c.Data(200, "application/pdf", buf.Bytes())
 }
 
@@ -196,28 +222,50 @@ func CreateTestInstructionPDF(c *gin.Context) {
 		return
 	}
 
-	// Create pdfs directory if it doesn't exist
-	pdfDir := "./pdfs"
-	if err := os.MkdirAll(pdfDir, 0755); err != nil {
-		utils.SendErrorResponse(c, 500, "PDFディレクトリの作成に失敗しました")
+	// Convert PDF to bytes
+	var buf bytes.Buffer
+	if err := pdf.Write(&buf); err != nil {
+		utils.SendErrorResponse(c, 500, "PDFの出力に失敗しました: "+err.Error())
 		return
 	}
 
 	// Generate unique filename with timestamp
 	timestamp := time.Now().Format("20060102_150405")
 	filename := fmt.Sprintf("test_instruction_%s.pdf", timestamp)
-	filepath := filepath.Join(pdfDir, filename)
 
-	// Save the PDF
-	if err := pdf.WritePdf(filepath); err != nil {
-		utils.SendErrorResponse(c, 500, "PDFの保存に失敗しました: "+err.Error())
-		return
+	// Check if local save mode
+	saveLocal := os.Getenv("SAVE_LOCAL_PDF")
+
+	if saveLocal == "true" {
+		// ローカル保存
+		pdfDir := "./pdfs"
+		if err := os.MkdirAll(pdfDir, 0755); err != nil {
+			utils.SendErrorResponse(c, 500, "PDFディレクトリの作成に失敗しました: "+err.Error())
+			return
+		}
+		localPath := filepath.Join(pdfDir, filename)
+		if err := pdf.WritePdf(localPath); err != nil {
+			utils.SendErrorResponse(c, 500, "PDFのローカル保存に失敗しました: "+err.Error())
+			return
+		}
+	} else {
+		// Google Driveにアップロード
+		driveService, err := services.NewDriveService()
+		if err != nil {
+			utils.SendErrorResponse(c, 500, "Google Driveサービスの初期化に失敗しました: "+err.Error())
+			return
+		}
+
+		_, err = driveService.UploadFile(filename, "application/pdf", buf.Bytes())
+		if err != nil {
+			utils.SendErrorResponse(c, 500, "Google Driveへのアップロードに失敗しました: "+err.Error())
+			return
+		}
 	}
 
-	// Return success response
-	utils.SuccessResponse(c, gin.H{
-		"message":  "テスト指示書PDFが正常に作成されました",
-		"filename": filename,
-		"filepath": filepath,
-	})
+	// 保存処理の後、常にPDFファイルを直接レスポンスとして返す
+	c.Header("Content-Type", "application/pdf")
+	c.Header("Content-Disposition", fmt.Sprintf("attachment; filename=%s", filename))
+	c.Header("Content-Length", fmt.Sprintf("%d", buf.Len()))
+	c.Data(200, "application/pdf", buf.Bytes())
 }
