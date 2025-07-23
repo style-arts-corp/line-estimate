@@ -11,11 +11,24 @@ export default function ConfirmationPage() {
   const router = useRouter()
   const { state } = useAppContext()
   const [quoteGenerated, setQuoteGenerated] = useState(false)
+  const [pdfBlob, setPdfBlob] = useState<Blob | null>(null)
+  const [pdfUrl, setPdfUrl] = useState<string | null>(null)
 
   useEffect(() => {
     // quoteGenerated 状態を Context から取得
     setQuoteGenerated(state.quoteGenerated)
   }, [state.quoteGenerated])
+
+  // PDFのBlobからオブジェクトURLを作成
+  useEffect(() => {
+    if (pdfBlob) {
+      const url = URL.createObjectURL(pdfBlob)
+      setPdfUrl(url)
+      return () => {
+        URL.revokeObjectURL(url)
+      }
+    }
+  }, [pdfBlob])
 
   const { mutate: generateEstimatePDF, isPending: isGenerating, error } = usePostApiV1EstimatesPdf()
 
@@ -43,7 +56,8 @@ export default function ConfirmationPage() {
         }
       },{
         onSuccess: (data) => {
-          console.log(data)
+          setPdfBlob(data as Blob)
+          setQuoteGenerated(true)
         },
         onError: (error) => {
           console.error(error)
@@ -52,9 +66,12 @@ export default function ConfirmationPage() {
   }
 
   const handleNavigateToQuote = () => {
-    // APIから返されたPDFのURLを使用、なければデフォルトURL
-    // window.open(pdfUrl || QUOTE_URL, '_blank')
-    alert("PDFへ遷移する")
+    if (pdfUrl) {
+      // 新しいタブでPDFを開く
+      window.open(pdfUrl, '_blank')
+    } else {
+      alert("PDFが生成されていません")
+    }
   }
 
   const handleNavigateToInstructions = () => {
@@ -162,9 +179,22 @@ export default function ConfirmationPage() {
                 className="w-full px-6 py-3 bg-blue-600 text-white font-medium rounded-md hover:bg-blue-700 transition-colors flex items-center justify-center"
               >
                 <FileText className="mr-2 h-5 w-5" />
-                見積書へ遷移
+                見積書を新しいタブで開く
                 <ExternalLink className="ml-2 h-4 w-4" />
               </button>
+
+              {pdfUrl && (
+                <div className="mt-4 border border-gray-300 rounded-lg overflow-hidden">
+                  <div className="bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700">
+                    見積書プレビュー
+                  </div>
+                  <iframe
+                    src={pdfUrl}
+                    className="w-full h-96"
+                    title="見積書PDF"
+                  />
+                </div>
+              )}
 
               <button
                 onClick={handleNavigateToInstructions}

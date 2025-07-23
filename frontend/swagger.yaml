@@ -483,12 +483,12 @@ paths:
         schema:
           $ref: '#/definitions/models.PDFInstruction'
       produces:
-      - application/json
+      - application/pdf
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/utils.Response'
+            type: file
         "400":
           description: Bad Request
           schema:
@@ -551,12 +551,12 @@ paths:
       - application/json
       description: 開発用のテスト指示書PDFを生成します
       produces:
-      - application/json
+      - application/pdf
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/utils.Response'
+            type: file
         "500":
           description: Internal Server Error
           schema:
