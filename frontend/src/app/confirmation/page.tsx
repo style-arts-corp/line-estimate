@@ -5,14 +5,13 @@ import { useRouter } from 'next/navigation'
 import { FileText, FileOutput, ExternalLink, ImageIcon } from 'lucide-react'
 import { useAppContext } from '@/contexts/AppContext'
 import { usePostApiV1EstimatesPdf } from '@/orval/generated/estimates/estimates'
-import { ImageUpload } from '@/components/image-upload'
-import type { QuoteImage } from '@/lib/types'
 import { convertQuoteImagesToPDFImages, validateTotalImageSize } from '@/utils/image-converter'
 import type { ModelsPDFImage } from '@/orval/generated/model/modelsPDFImage'
+import Image from 'next/image'
 
 export default function ConfirmationPage() {
   const router = useRouter()
-  const { state, dispatch } = useAppContext()
+  const { state } = useAppContext()
   const [quoteGenerated, setQuoteGenerated] = useState(false)
   const [pdfBlob, setPdfBlob] = useState<Blob | null>(null)
   const [pdfUrl, setPdfUrl] = useState<string | null>(null)
@@ -109,13 +108,6 @@ export default function ConfirmationPage() {
     router.push('/instructions')
   }
 
-  const handleImageAdd = (image: QuoteImage) => {
-    dispatch({ type: 'ADD_QUOTE_IMAGE', payload: image })
-  }
-
-  const handleImageRemove = (id: string) => {
-    dispatch({ type: 'REMOVE_QUOTE_IMAGE', payload: id })
-  }
 
   return (
     <main className="min-h-screen bg-gray-50 py-8">
@@ -172,25 +164,29 @@ export default function ConfirmationPage() {
 
               <hr className="border-gray-200" />
 
-              <div>
-                <h2 className="text-lg font-semibold text-gray-900 mb-2 flex items-center gap-2">
-                  <ImageIcon className="h-5 w-5" />
-                  画像アップロード
-                </h2>
-                <p className="text-sm text-gray-600 mb-4">
-                  廃棄品の画像をまとめてアップロードできます（最大合計50MB）
-                </p>
-                {state.quoteImages.length > 0 && (
-                  <div className="text-xs text-gray-500 mb-2">
-                    ※ 画像はPDFに含まれます
+              {state.quoteImages.length > 0 && (
+                <div>
+                  <h2 className="text-lg font-semibold text-gray-900 mb-2 flex items-center gap-2">
+                    <ImageIcon className="h-5 w-5" />
+                    添付画像
+                  </h2>
+                  <p className="text-sm text-gray-600 mb-4">
+                    {state.quoteImages.length}枚の画像が選択されています
+                  </p>
+                  <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2">
+                    {state.quoteImages.map((image) => (
+                      <div key={image.id} className="relative aspect-square">
+                        <Image
+                          src={image.preview}
+                          alt={image.name}
+                          fill
+                          className="object-cover rounded-lg border border-gray-200"
+                        />
+                      </div>
+                    ))}
                   </div>
-                )}
-                <ImageUpload
-                  images={state.quoteImages}
-                  onImageAdd={handleImageAdd}
-                  onImageRemove={handleImageRemove}
-                />
-              </div>
+                </div>
+              )}
 
               <hr className="border-gray-200" />
 
