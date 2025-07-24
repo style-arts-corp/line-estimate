@@ -2,14 +2,15 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import Image from 'next/image'
-import { FileText, FileOutput, ExternalLink } from 'lucide-react'
+import { FileText, FileOutput, ExternalLink, ImageIcon } from 'lucide-react'
 import { useAppContext } from '@/contexts/AppContext'
-import {usePostApiV1EstimatesPdf} from '@/orval/generated/estimates/estimates'
+import { usePostApiV1EstimatesPdf } from '@/orval/generated/estimates/estimates'
+import { ImageUpload } from '@/components/image-upload'
+import type { QuoteImage } from '@/lib/types'
 
 export default function ConfirmationPage() {
   const router = useRouter()
-  const { state } = useAppContext()
+  const { state, dispatch } = useAppContext()
   const [quoteGenerated, setQuoteGenerated] = useState(false)
   const [pdfBlob, setPdfBlob] = useState<Blob | null>(null)
   const [pdfUrl, setPdfUrl] = useState<string | null>(null)
@@ -78,6 +79,14 @@ export default function ConfirmationPage() {
     router.push('/instructions')
   }
 
+  const handleImageAdd = (image: QuoteImage) => {
+    dispatch({ type: 'ADD_QUOTE_IMAGE', payload: image })
+  }
+
+  const handleImageRemove = (id: string) => {
+    dispatch({ type: 'REMOVE_QUOTE_IMAGE', payload: id })
+  }
+
   return (
     <main className="min-h-screen bg-gray-50 py-8">
       <div className="container mx-auto px-4 max-w-2xl">
@@ -119,17 +128,6 @@ export default function ConfirmationPage() {
                 <div className="space-y-4">
                   {state.selectedItems.map((item) => (
                     <div key={item.id} className="flex items-start">
-                      {item.imageUrl && (
-                        <div className="h-16 w-16 mr-3 rounded overflow-hidden border border-gray-200 flex-shrink-0">
-                          <Image
-                            src={item.imageUrl || '/placeholder.svg'}
-                            alt={`${item.name}の写真`}
-                            width={64}
-                            height={64}
-                            className="h-full w-full object-cover"
-                          />
-                        </div>
-                      )}
                       <div className="flex-grow flex justify-between">
                         <div>
                           <span className="font-medium text-gray-900">{item.name}</span>
@@ -140,6 +138,23 @@ export default function ConfirmationPage() {
                     </div>
                   ))}
                 </div>
+              </div>
+
+              <hr className="border-gray-200" />
+
+              <div>
+                <h2 className="text-lg font-semibold text-gray-900 mb-2 flex items-center gap-2">
+                  <ImageIcon className="h-5 w-5" />
+                  画像アップロード
+                </h2>
+                <p className="text-sm text-gray-600 mb-4">
+                  廃棄品の画像をまとめてアップロードできます
+                </p>
+                <ImageUpload
+                  images={state.quoteImages}
+                  onImageAdd={handleImageAdd}
+                  onImageRemove={handleImageRemove}
+                />
               </div>
 
               <hr className="border-gray-200" />

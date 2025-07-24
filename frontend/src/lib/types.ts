@@ -8,7 +8,6 @@ export interface Item {
 export interface SelectedItem extends Item {
   quantity: number
   customPrice: number
-  imageUrl?: string
 }
 
 export interface Category {
@@ -85,4 +84,11 @@ export interface LoanItem {
 export interface LoanSearchResult {
   application: LoanApplication
   matchedItems: string[]
+}
+
+export interface QuoteImage {
+  id: string
+  file: File
+  preview: string
+  name: string
 }

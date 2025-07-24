@@ -1,4 +1,4 @@
-import type { SelectedItem, CustomerInfo } from '@/lib/types'
+import type { SelectedItem, CustomerInfo, QuoteImage } from '@/lib/types'
 
 export interface AppState {
   selectedItems: SelectedItem[]
@@ -16,6 +16,7 @@ export interface AppState {
   collectionAmountTaxExcluded: number
   tPointAvailable: boolean
   tPointUsage: number
+  quoteImages: QuoteImage[]
 }
 
 export type AppAction =
@@ -38,6 +39,9 @@ export type AppAction =
   | { type: 'SET_COLLECTION_AMOUNT_TAX_EXCLUDED'; payload: number }
   | { type: 'SET_T_POINT_AVAILABLE'; payload: boolean }
   | { type: 'SET_T_POINT_USAGE'; payload: number }
+  | { type: 'ADD_QUOTE_IMAGE'; payload: QuoteImage }
+  | { type: 'REMOVE_QUOTE_IMAGE'; payload: string }
+  | { type: 'SET_QUOTE_IMAGES'; payload: QuoteImage[] }
   | { type: 'RESET_STATE' }
 
 export interface AppContextType {

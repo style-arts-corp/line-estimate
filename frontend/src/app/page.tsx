@@ -98,19 +98,6 @@ export default function Home() {
     dispatch({ type: 'REMOVE_SELECTED_ITEM', payload: id })
   }
 
-  const addItemImage = (id: string, imageUrl: string) => {
-    dispatch({
-      type: 'UPDATE_SELECTED_ITEM',
-      payload: { id, updates: { imageUrl } }
-    })
-  }
-
-  const removeItemImage = (id: string) => {
-    dispatch({
-      type: 'UPDATE_SELECTED_ITEM',
-      payload: { id, updates: { imageUrl: undefined } }
-    })
-  }
 
   const calculateTotal = () => {
     return state.selectedItems.reduce((total, item) => total + item.customPrice * item.quantity, 0)
@@ -204,8 +191,6 @@ export default function Home() {
               onPriceChange={updateItemPrice}
               onNameChange={updateItemName}
               onRemove={removeItem}
-              onImageAdd={addItemImage}
-              onImageRemove={removeItemImage}
             />
           </div>
         )}
