@@ -7,7 +7,6 @@ import { useAppContext } from '@/contexts/AppContext'
 import { usePostApiV1EstimatesPdf } from '@/orval/generated/estimates/estimates'
 import { convertQuoteImagesToPDFImages, validateTotalImageSize } from '@/utils/image-converter'
 import type { ModelsPDFImage } from '@/orval/generated/model/modelsPDFImage'
-import Image from 'next/image'
 
 export default function ConfirmationPage() {
   const router = useRouter()
@@ -176,11 +175,10 @@ export default function ConfirmationPage() {
                   <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2">
                     {state.quoteImages.map((image) => (
                       <div key={image.id} className="relative aspect-square">
-                        <Image
+                        <img
                           src={image.preview}
                           alt={image.name}
-                          fill
-                          className="object-cover rounded-lg border border-gray-200"
+                          className="absolute inset-0 w-full h-full object-cover rounded-lg border border-gray-200"
                         />
                       </div>
                     ))}

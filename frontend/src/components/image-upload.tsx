@@ -2,7 +2,6 @@
 
 import React, { useCallback, useRef } from 'react'
 import { Upload, X, Image as ImageIcon } from 'lucide-react'
-import Image from 'next/image'
 import type { QuoteImage } from '@/lib/types'
 
 interface ImageUploadProps {
@@ -153,14 +152,13 @@ export function ImageUpload({
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
           {images.map((image) => (
             <div key={image.id} className="relative group">
-              <div className="aspect-square relative overflow-hidden rounded-lg border border-gray-200">
-                <Image
+              <div className="aspect-square relative overflow-hidden rounded-lg border border-gray-200 bg-gray-100">
+                <img
                   src={image.preview}
                   alt={image.name}
-                  fill
-                  className="object-cover"
+                  className="w-full h-full object-cover"
                 />
-                <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-40 transition-opacity" />
+                <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-40 transition-opacity pointer-events-none" />
               </div>
               
               {/* 削除ボタン */}
