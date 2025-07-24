@@ -178,7 +178,7 @@ export default function ConfirmationPage() {
                         <img
                           src={image.preview}
                           alt={image.name}
-                          className="absolute inset-0 w-full h-full object-cover rounded-lg border border-gray-200"
+                          className="w-full h-full object-cover rounded-lg border border-gray-200"
                         />
                       </div>
                     ))}
