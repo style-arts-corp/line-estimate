@@ -22,6 +22,7 @@ export const initialState: AppState = {
   collectionAmountTaxExcluded: 0,
   tPointAvailable: false,
   tPointUsage: 0,
+  quoteImages: [],
 }
 
 export function appReducer(state: AppState, action: AppAction): AppState {
@@ -145,6 +146,24 @@ export function appReducer(state: AppState, action: AppAction): AppState {
       return {
         ...state,
         tPointUsage: action.payload,
+      }
+    
+    case 'ADD_QUOTE_IMAGE':
+      return {
+        ...state,
+        quoteImages: [...state.quoteImages, action.payload],
+      }
+    
+    case 'REMOVE_QUOTE_IMAGE':
+      return {
+        ...state,
+        quoteImages: state.quoteImages.filter(image => image.id !== action.payload),
+      }
+    
+    case 'SET_QUOTE_IMAGES':
+      return {
+        ...state,
+        quoteImages: action.payload,
       }
     
     case 'RESET_STATE':

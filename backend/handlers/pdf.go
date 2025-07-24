@@ -186,6 +186,15 @@ func CreateEstimatePDF(c *gin.Context) {
 		return
 	}
 
+	// Add images to PDF if provided
+	if len(request.Images) > 0 {
+		helper := utils.NewPDFHelper(pdf)
+		if err := helper.DrawImageGrid(request.Images, 3); err != nil {
+			// Log error but don't fail the entire PDF generation
+			fmt.Printf("Warning: Failed to add images to PDF: %v\n", err)
+		}
+	}
+
 	// Generate unique filename with timestamp
 	timestamp := time.Now().Format("20060102_150405")
 	filename := fmt.Sprintf("estimate_%s_%s.pdf", estimate.EstimateNo, timestamp)

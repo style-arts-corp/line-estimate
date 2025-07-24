@@ -716,11 +716,32 @@
                 "customer": {
                     "$ref": "#/definitions/models.PDFRequestCustomer"
                 },
+                "images": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.PDFImage"
+                    }
+                },
                 "items": {
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/models.PDFRequestItem"
                     }
+                }
+            }
+        },
+        "models.PDFImage": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "description": "base64 encoded image data",
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
                 }
             }
         },

@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useForm } from '@tanstack/react-form'
-import Image from 'next/image'
 import { FileText, Save, ArrowLeft, Check, ExternalLink, AlertCircle } from 'lucide-react'
 import { instructionsSchema, type InstructionsForm } from '@/lib/validation'
 import { useAppContext } from '@/contexts/AppContext'
@@ -454,17 +453,6 @@ export default function InstructionsPage() {
                 <div className="space-y-4">
                   {state.selectedItems.map((item) => (
                     <div key={item.id} className="flex items-start">
-                      {item.imageUrl && (
-                        <div className="h-16 w-16 mr-3 rounded overflow-hidden border border-gray-200 flex-shrink-0">
-                          <Image
-                            src={item.imageUrl || '/placeholder.svg'}
-                            alt={`${item.name}の写真`}
-                            width={64}
-                            height={64}
-                            className="h-full w-full object-cover"
-                          />
-                        </div>
-                      )}
                       <div className="flex-grow flex justify-between">
                         <div>
                           <span className="font-medium text-gray-900">{item.name}</span>

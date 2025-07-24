@@ -1,8 +1,7 @@
 'use client'
 
-import React, { useRef, useState } from 'react'
-import Image from 'next/image'
-import { Trash2, Camera, X, Edit, Check } from 'lucide-react'
+import React, { useState } from 'react'
+import { Trash2, Edit, Check, X } from 'lucide-react'
 import type { SelectedItem } from '@/lib/types'
 
 interface SelectedItemsListProps {
@@ -11,8 +10,6 @@ interface SelectedItemsListProps {
   onPriceChange: (id: string, price: number) => void
   onNameChange: (id: string, name: string) => void
   onRemove: (id: string) => void
-  onImageAdd: (id: string, imageUrl: string) => void
-  onImageRemove: (id: string) => void
 }
 
 export function SelectedItemsList({
@@ -21,20 +18,9 @@ export function SelectedItemsList({
   onPriceChange,
   onNameChange,
   onRemove,
-  onImageAdd,
-  onImageRemove,
 }: SelectedItemsListProps) {
-  const fileInputRefs = useRef<{ [key: string]: HTMLInputElement | null }>({})
   const [editingName, setEditingName] = useState<string | null>(null)
   const [tempName, setTempName] = useState('')
-
-  const handleImageUpload = (id: string, file: File) => {
-    const reader = new FileReader()
-    reader.onloadend = () => {
-      onImageAdd(id, reader.result as string)
-    }
-    reader.readAsDataURL(file)
-  }
 
   const startEditingName = (id: string, currentName: string) => {
     setEditingName(id)
@@ -57,48 +43,6 @@ export function SelectedItemsList({
       {items.map((item) => (
         <div key={item.id} className="border border-gray-200 rounded-lg p-4">
           <div className="flex flex-col sm:flex-row gap-4">
-            {/* 画像セクション */}
-            <div className="flex-shrink-0">
-              {item.imageUrl ? (
-                <div className="relative w-24 h-24">
-                  <Image
-                    src={item.imageUrl}
-                    alt={item.name}
-                    fill
-                    className="object-cover rounded-lg"
-                  />
-                  <button
-                    onClick={() => onImageRemove(item.id)}
-                    className="absolute -top-2 -right-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors"
-                  >
-                    <X className="h-3 w-3" />
-                  </button>
-                </div>
-              ) : (
-                <div>
-                  <input
-                    ref={(el) => {
-                      fileInputRefs.current[item.id] = el
-                    }}
-                    type="file"
-                    accept="image/*"
-                    onChange={(e) => {
-                      const file = e.target.files?.[0]
-                      if (file) handleImageUpload(item.id, file)
-                    }}
-                    className="hidden"
-                  />
-                  <button
-                    onClick={() => fileInputRefs.current[item.id]?.click()}
-                    className="w-24 h-24 border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center hover:border-gray-400 transition-colors"
-                  >
-                    <Camera className="h-6 w-6 text-gray-400" />
-                    <span className="text-xs text-gray-400 mt-1">写真追加</span>
-                  </button>
-                </div>
-              )}
-            </div>
-
             {/* 商品情報セクション */}
             <div className="flex-1 space-y-2">
               {/* 商品名 */}

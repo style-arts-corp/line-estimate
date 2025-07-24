@@ -6,12 +6,14 @@ import { CategoryAccordion } from '@/components/category-accordion'
 import { SelectedItemsList } from '@/components/selected-items-list'
 import { QuoteSummary } from '@/components/quote-summary'
 import { CustomItemForm } from '@/components/custom-item-form'
+import { ImageUpload } from '@/components/image-upload'
 import { useRouter } from 'next/navigation'
 import { customerInfoSchema } from '@/lib/validation'
 import { useAppContext } from '@/contexts/AppContext'
-import type { Item, CustomerInfo, Category } from '@/lib/types'
+import type { Item, CustomerInfo, Category, QuoteImage } from '@/lib/types'
 import { useGetApiV1Categories } from '@/orval/generated/categories/categories'
 import { GetApiV1Categories200AllOf } from '@/orval/generated/model/getApiV1Categories200AllOf'
+import { ImageIcon } from 'lucide-react'
 
 type ApiCategory = NonNullable<NonNullable<GetApiV1Categories200AllOf['data']>["categories"]>[number]
 
@@ -98,19 +100,14 @@ export default function Home() {
     dispatch({ type: 'REMOVE_SELECTED_ITEM', payload: id })
   }
 
-  const addItemImage = (id: string, imageUrl: string) => {
-    dispatch({
-      type: 'UPDATE_SELECTED_ITEM',
-      payload: { id, updates: { imageUrl } }
-    })
+  const handleImageAdd = (image: QuoteImage) => {
+    dispatch({ type: 'ADD_QUOTE_IMAGE', payload: image })
   }
 
-  const removeItemImage = (id: string) => {
-    dispatch({
-      type: 'UPDATE_SELECTED_ITEM',
-      payload: { id, updates: { imageUrl: undefined } }
-    })
+  const handleImageRemove = (id: string) => {
+    dispatch({ type: 'REMOVE_QUOTE_IMAGE', payload: id })
   }
+
 
   const calculateTotal = () => {
     return state.selectedItems.reduce((total, item) => total + item.customPrice * item.quantity, 0)
@@ -204,8 +201,6 @@ export default function Home() {
               onPriceChange={updateItemPrice}
               onNameChange={updateItemName}
               onRemove={removeItem}
-              onImageAdd={addItemImage}
-              onImageRemove={removeItemImage}
             />
           </div>
         )}
@@ -215,6 +210,26 @@ export default function Home() {
             廃棄品を1つ以上選択してください
           </div>
         )}
+
+        <div className="bg-white rounded-lg shadow p-4">
+          <h2 className="text-lg font-semibold text-gray-900 mb-2 flex items-center gap-2">
+            <ImageIcon className="h-5 w-5" />
+            画像アップロード
+          </h2>
+          <p className="text-sm text-gray-600 mb-4">
+            廃棄品の画像をまとめてアップロードできます（最大合計50MB）
+          </p>
+          {state.quoteImages.length > 0 && (
+            <div className="text-xs text-gray-500 mb-2">
+              ※ 画像はPDFに含まれます
+            </div>
+          )}
+          <ImageUpload
+            images={state.quoteImages}
+            onImageAdd={handleImageAdd}
+            onImageRemove={handleImageRemove}
+          />
+        </div>
       </div>
 
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 shadow-lg">
