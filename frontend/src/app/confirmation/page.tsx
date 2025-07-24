@@ -7,6 +7,8 @@ import { useAppContext } from '@/contexts/AppContext'
 import { usePostApiV1EstimatesPdf } from '@/orval/generated/estimates/estimates'
 import { ImageUpload } from '@/components/image-upload'
 import type { QuoteImage } from '@/lib/types'
+import { convertQuoteImagesToPDFImages, validateTotalImageSize } from '@/utils/image-converter'
+import type { ModelsPDFImage } from '@/orval/generated/model/modelsPDFImage'
 
 export default function ConfirmationPage() {
   const router = useRouter()
@@ -14,6 +16,8 @@ export default function ConfirmationPage() {
   const [quoteGenerated, setQuoteGenerated] = useState(false)
   const [pdfBlob, setPdfBlob] = useState<Blob | null>(null)
   const [pdfUrl, setPdfUrl] = useState<string | null>(null)
+  const [isConvertingImages, setIsConvertingImages] = useState(false)
+  const [imageConversionProgress, setImageConversionProgress] = useState({ completed: 0, total: 0 })
 
   useEffect(() => {
     // quoteGenerated 状態を Context から取得
@@ -34,36 +38,62 @@ export default function ConfirmationPage() {
   const { mutate: generateEstimatePDF, isPending: isGenerating, error } = usePostApiV1EstimatesPdf()
 
   const handleGenerateQuote = async () => {
-      // 見積書データを準備
-        const customer=  {
-          name: state.customerInfo.name || '顧客名未設定',
-          address: state.customerInfo.address || '住所未設定',
-          phone: state.customerInfo.phone || '電話番号未設定',
-          email: state.customerInfo.email || 'メール未設定',
-          disposalDate: state.customerInfo.disposalDate || '廃棄予定日未設定',
-        }
-        const items= state.selectedItems.map(item => ({
-          id: item.name, // id
-          quantity: item.quantity, //数量
-          customPrice: item.customPrice, // 単価
-          amount: item.customPrice * item.quantity // 小計
-        }))
+    try {
+      // 画像の合計サイズを検証
+      if (state.quoteImages.length > 0 && !validateTotalImageSize(state.quoteImages, 50)) {
+        alert('画像の合計サイズが50MBを超えています。画像を削除するか、より小さい画像を使用してください。')
+        return
+      }
 
-      // カスタムクライアントを使用してAPIを呼び出す
+      // 画像変換の開始
+      setIsConvertingImages(true)
+      setImageConversionProgress({ completed: 0, total: state.quoteImages.length })
+
+      // 画像をBase64に変換
+      let convertedImages: ModelsPDFImage[] = []
+      if (state.quoteImages.length > 0) {
+        convertedImages = await convertQuoteImagesToPDFImages(state.quoteImages)
+      }
+
+      setIsConvertingImages(false)
+
+      // 見積書データを準備
+      const customer = {
+        name: state.customerInfo.name || '顧客名未設定',
+        address: state.customerInfo.address || '住所未設定',
+        phone: state.customerInfo.phone || '電話番号未設定',
+        email: state.customerInfo.email || 'メール未設定',
+        disposalDate: state.customerInfo.disposalDate || '廃棄予定日未設定',
+      }
+      const items = state.selectedItems.map(item => ({
+        id: item.name,
+        quantity: item.quantity,
+        customPrice: item.customPrice,
+        amount: item.customPrice * item.quantity
+      }))
+
+      // APIを呼び出す
       generateEstimatePDF({
         data: {
           customer,
-          items
+          items,
+          images: convertedImages
         }
-      },{
+      }, {
         onSuccess: (data) => {
           setPdfBlob(data as Blob)
           setQuoteGenerated(true)
         },
         onError: (error) => {
           console.error(error)
+          alert('PDFの生成に失敗しました。もう一度お試しください。')
         }
       })
+    } catch (error) {
+      setIsConvertingImages(false)
+      console.error('Error generating quote:', error)
+      alert('画像の処理中にエラーが発生しました。')
+    }
   }
 
   const handleNavigateToQuote = () => {
@@ -148,8 +178,13 @@ export default function ConfirmationPage() {
                   画像アップロード
                 </h2>
                 <p className="text-sm text-gray-600 mb-4">
-                  廃棄品の画像をまとめてアップロードできます
+                  廃棄品の画像をまとめてアップロードできます（最大合計50MB）
                 </p>
+                {state.quoteImages.length > 0 && (
+                  <div className="text-xs text-gray-500 mb-2">
+                    ※ 画像はPDFに含まれます
+                  </div>
+                )}
                 <ImageUpload
                   images={state.quoteImages}
                   onImageAdd={handleImageAdd}
@@ -176,13 +211,23 @@ export default function ConfirmationPage() {
 
         <div className="flex flex-col space-y-4">
           {!quoteGenerated ? (
-            <button
-              onClick={handleGenerateQuote}
-              disabled={isGenerating}
-              className="w-full px-6 py-3 bg-blue-600 text-white font-medium rounded-md hover:bg-blue-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
-            >
-              {isGenerating ? '生成中...' : '見積書生成'}
-            </button>
+            <>
+              {isConvertingImages && (
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-blue-700 mb-4">
+                  <div className="flex items-center gap-2">
+                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-700"></div>
+                    <span>画像を処理中... ({imageConversionProgress.completed}/{imageConversionProgress.total})</span>
+                  </div>
+                </div>
+              )}
+              <button
+                onClick={handleGenerateQuote}
+                disabled={isGenerating || isConvertingImages}
+                className="w-full px-6 py-3 bg-blue-600 text-white font-medium rounded-md hover:bg-blue-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
+              >
+                {isGenerating || isConvertingImages ? '生成中...' : '見積書生成'}
+              </button>
+            </>
           ) : (
             <>
               <div className="bg-green-50 border border-green-200 rounded-lg p-4 text-green-700 mb-4">

@@ -28,6 +28,27 @@ export function ImageUpload({
   }
 
   const handleFiles = useCallback((files: FileList) => {
+    // 現在の画像数と追加する画像数の合計をチェック
+    const totalImageCount = images.length + files.length
+    if (totalImageCount > 20) {
+      alert(`画像は最大20枚までです。現在${images.length}枚、追加できるのは${20 - images.length}枚までです。`)
+      return
+    }
+
+    // 合計サイズを計算
+    let totalSize = images.reduce((sum, img) => sum + img.file.size, 0)
+    const newFiles = Array.from(files)
+    
+    for (const file of newFiles) {
+      totalSize += file.size
+    }
+    
+    // 50MBを超える場合は警告
+    if (totalSize > 50 * 1024 * 1024) {
+      alert('画像の合計サイズが50MBを超えています。一部の画像を削除してから追加してください。')
+      return
+    }
+
     Array.from(files).forEach(file => {
       // ファイルタイプチェック
       if (!acceptedTypes.includes(file.type)) {
@@ -53,7 +74,7 @@ export function ImageUpload({
 
       onImageAdd(newImage)
     })
-  }, [acceptedTypes, maxSize, onImageAdd])
+  }, [acceptedTypes, maxSize, onImageAdd, images])
 
   const handleDrag = useCallback((e: React.DragEvent) => {
     e.preventDefault()
@@ -157,11 +178,16 @@ export function ImageUpload({
         </div>
       )}
 
-      {/* 画像カウント */}
+      {/* 画像カウントとサイズ情報 */}
       {images.length > 0 && (
-        <div className="flex items-center gap-2 text-sm text-gray-600">
-          <ImageIcon className="h-4 w-4" />
-          <span>{images.length}枚の画像が選択されています</span>
+        <div className="space-y-2">
+          <div className="flex items-center gap-2 text-sm text-gray-600">
+            <ImageIcon className="h-4 w-4" />
+            <span>{images.length}枚の画像が選択されています（最大20枚）</span>
+          </div>
+          <div className="text-xs text-gray-500">
+            合計サイズ: {(images.reduce((sum, img) => sum + img.file.size, 0) / 1024 / 1024).toFixed(1)}MB / 50MB
+          </div>
         </div>
       )}
     </div>
