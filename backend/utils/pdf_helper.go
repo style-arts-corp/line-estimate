@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"bytes"
 	"fmt"
 	"github.com/signintech/gopdf"
 	"line-estimate-backend/models"
@@ -304,4 +305,157 @@ func FormatCurrency(amount float64) string {
 	}
 
 	return strings.Join(parts, ",")
+}
+
+// DrawImageGrid draws images in a grid layout
+func (h *PDFHelper) DrawImageGrid(images []models.PDFImage, startPage int) error {
+	if len(images) == 0 {
+		return nil
+	}
+
+	// Image grid configuration
+	const (
+		imagesPerRow  = 2
+		imagesPerCol  = 3
+		imagesPerPage = imagesPerRow * imagesPerCol
+		imageWidth    = 220.0
+		imageHeight   = 165.0
+		marginLeft    = 50.0
+		marginTop     = 100.0
+		horizontalGap = 35.0
+		verticalGap   = 50.0
+	)
+
+	imageHelper := NewImageHelper(imageWidth, imageHeight)
+	
+	// Process images in batches of imagesPerPage
+	for pageIdx := 0; pageIdx < len(images); pageIdx += imagesPerPage {
+		// Add new page for images
+		h.pdf.AddPage()
+		
+		// Draw page header
+		h.pdf.SetX(50)
+		h.pdf.SetY(50)
+		if err := h.pdf.SetFont("noto-sans", "", 16); err != nil {
+			return err
+		}
+		h.pdf.Cell(nil, "添付画像")
+		
+		// Draw horizontal line
+		h.pdf.SetLineWidth(0.5)
+		h.pdf.Line(50, 70, 545, 70)
+		
+		// Get images for this page
+		endIdx := pageIdx + imagesPerPage
+		if endIdx > len(images) {
+			endIdx = len(images)
+		}
+		pageImages := images[pageIdx:endIdx]
+		
+		// Draw images in grid
+		for idx, img := range pageImages {
+			// Calculate grid position
+			row := idx / imagesPerRow
+			col := idx % imagesPerRow
+			
+			x := marginLeft + float64(col)*(imageWidth+horizontalGap)
+			y := marginTop + float64(row)*(imageHeight+verticalGap)
+			
+			// Decode and process image
+			imageData, format, err := imageHelper.DecodeBase64Image(img.Data)
+			if err != nil {
+				// Draw error placeholder
+				h.pdf.SetStrokeColor(200, 200, 200)
+				h.pdf.SetLineWidth(1)
+				h.pdf.RectFromUpperLeftWithStyle(x, y, imageWidth, imageHeight, "D")
+				
+				h.pdf.SetX(x + 10)
+				h.pdf.SetY(y + imageHeight/2)
+				if err := h.pdf.SetFont("noto-sans", "", 10); err != nil {
+					return err
+				}
+				h.pdf.Cell(nil, "画像読み込みエラー")
+				continue
+			}
+			
+			// Resize image if needed
+			resizedData, err := imageHelper.ResizeImage(imageData, format)
+			if err != nil {
+				// Draw error placeholder
+				h.pdf.SetStrokeColor(200, 200, 200)
+				h.pdf.SetLineWidth(1)
+				h.pdf.RectFromUpperLeftWithStyle(x, y, imageWidth, imageHeight, "D")
+				
+				h.pdf.SetX(x + 10)
+				h.pdf.SetY(y + imageHeight/2)
+				if err := h.pdf.SetFont("noto-sans", "", 10); err != nil {
+					return err
+				}
+				h.pdf.Cell(nil, "画像処理エラー")
+				continue
+			}
+			
+			// Get actual image dimensions to maintain aspect ratio
+			width, height, err := imageHelper.GetImageDimensions(resizedData)
+			if err != nil {
+				continue
+			}
+			
+			// Calculate display dimensions maintaining aspect ratio
+			displayWidth := imageWidth
+			displayHeight := imageHeight
+			
+			aspectRatio := float64(width) / float64(height)
+			boxAspectRatio := imageWidth / imageHeight
+			
+			if aspectRatio > boxAspectRatio {
+				// Image is wider than box
+				displayHeight = imageWidth / aspectRatio
+			} else {
+				// Image is taller than box
+				displayWidth = imageHeight * aspectRatio
+			}
+			
+			// Center image in box
+			offsetX := (imageWidth - displayWidth) / 2
+			offsetY := (imageHeight - displayHeight) / 2
+			
+			// Draw image border
+			h.pdf.SetStrokeColor(200, 200, 200)
+			h.pdf.SetLineWidth(0.5)
+			h.pdf.RectFromUpperLeftWithStyle(x, y, imageWidth, imageHeight, "D")
+			
+			// Add image to PDF
+			imgHolder, err := gopdf.ImageHolderByReader(bytes.NewReader(resizedData))
+			if err != nil {
+				continue
+			}
+			
+			err = h.pdf.ImageByHolder(imgHolder, x+offsetX, y+offsetY, &gopdf.Rect{
+				W: displayWidth,
+				H: displayHeight,
+			})
+			if err != nil {
+				continue
+			}
+			
+			// Draw image filename
+			h.pdf.SetX(x)
+			h.pdf.SetY(y + imageHeight + 10)
+			if err := h.pdf.SetFont("noto-sans", "", 9); err != nil {
+				return err
+			}
+			h.pdf.SetTextColor(100, 100, 100)
+			
+			// Truncate filename if too long
+			filename := img.Name
+			if len(filename) > 30 {
+				filename = filename[:27] + "..."
+			}
+			h.pdf.Cell(nil, filename)
+			h.pdf.SetTextColor(0, 0, 0) // Reset text color
+		}
+	}
+	
+	return nil
 }

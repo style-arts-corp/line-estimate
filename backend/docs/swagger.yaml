@@ -119,10 +119,24 @@ definitions:
     properties:
       customer:
         $ref: '#/definitions/models.PDFRequestCustomer'
+      images:
+        items:
+          $ref: '#/definitions/models.PDFImage'
+        type: array
       items:
         items:
           $ref: '#/definitions/models.PDFRequestItem'
         type: array
+    type: object
+  models.PDFImage:
+    properties:
+      data:
+        description: base64 encoded image data
+        type: string
+      id:
+        type: string
+      name:
+        type: string
     type: object
   models.PDFInstruction:
     properties:
