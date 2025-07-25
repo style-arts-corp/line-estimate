@@ -57,13 +57,18 @@ func GenerateEstimatePDF(estimate *models.PDFEstimate) (*gopdf.GoPdf, error) {
 		return nil, err
 	}
 
-	// Draw title
-	if err := helper.DrawTitle(estimate.Title); err != nil {
+	// Draw estimate info section
+	if err := helper.DrawEstimateInfo(estimate); err != nil {
 		return nil, err
 	}
 
-	// Draw items table (now includes totals)
-	tableEndY, err := helper.DrawTable(estimate, 320)
+	// Draw total amount with stamp box
+	if err := helper.DrawTotalAmount(estimate.Total); err != nil {
+		return nil, err
+	}
+
+	// Draw items table (now includes totals and specification column)
+	tableEndY, err := helper.DrawTable(estimate, 380)
 	if err != nil {
 		return nil, err
 	}
@@ -75,47 +80,42 @@ func GenerateEstimatePDF(estimate *models.PDFEstimate) (*gopdf.GoPdf, error) {
 		}
 	}
 
-	// Second page (for company seal)
-	pdf.AddPage()
-	if err := pdf.SetFont("noto-sans", "", 10); err != nil {
+	// Draw company seal stamp area on the first page
+	// Position it in the right side, below the company info
+	sealX := 480.0
+	sealY := 130.0
+	sealSize := 50.0
+	
+	// Draw circle for company seal
+	pdf.SetLineWidth(2)
+	pdf.SetStrokeColor(200, 0, 0) // Red color for seal
+	centerX := sealX + sealSize/2
+	centerY := sealY + sealSize/2
+	radius := sealSize / 2
+	
+	// Draw circle (approximate with many sided polygon)
+	steps := 36
+	for i := 0; i <= steps; i++ {
+		angle1 := float64(i) * 2.0 * 3.14159 / float64(steps)
+		angle2 := float64(i+1) * 2.0 * 3.14159 / float64(steps)
+		x1 := centerX + radius*math.Cos(angle1)
+		y1 := centerY + radius*math.Sin(angle1)
+		x2 := centerX + radius*math.Cos(angle2)
+		y2 := centerY + radius*math.Sin(angle2)
+		if i < steps {
+			pdf.Line(x1, y1, x2, y2)
+		}
+	}
+	
+	// Draw "丸共" text in the seal
+	pdf.SetX(sealX + 12)
+	pdf.SetY(sealY + 28)
+	if err := pdf.SetFont("noto-sans", "", 14); err != nil {
 		return nil, err
 	}
-
-	// Draw "社印" label with border
-	// First, measure text dimensions
-	textStr := "社印"
-	textWidth, _ := pdf.MeasureTextWidth(textStr)
-
-	// Define box dimensions as a square
-	boxSize := 40.0 // Larger square
-
-	// Position the box centered above the seal area
-	sealBoxX := 430.0
-	sealBoxWidth := 100.0
-	boxX := sealBoxX + (sealBoxWidth-boxSize)/2
-	boxY := 75.0 // Above the seal box
-
-	// Draw white-filled square with black border
-	pdf.SetLineWidth(1.0)
-	pdf.SetStrokeColor(0, 0, 0)     // Black border
-	pdf.SetFillColor(255, 255, 255) // White fill
-	pdf.RectFromUpperLeftWithStyle(boxX, boxY, boxSize, boxSize, "FD")
-
-	// Calculate text position to center it in the box
-	// For vertical centering, we need to account for font baseline
-	fontSize := 10.0
-	textX := boxX + (boxSize-textWidth)/2
-	textY := boxY + (boxSize / 2) + (fontSize / 3) // Approximate centering
-
-	// Draw the text
-	pdf.SetX(textX)
-	pdf.SetY(textY)
-	pdf.SetTextColor(0, 0, 0) // Black text
-	pdf.Cell(nil, textStr)
-
-	// Draw box for seal
-	pdf.SetLineWidth(0.5)
-	pdf.Rectangle(430, 120, 100, 100, "D", 0, 0)
+	pdf.SetTextColor(200, 0, 0) // Red text
+	pdf.Cell(nil, "丸共")
+	pdf.SetTextColor(0, 0, 0) // Reset to black
 
 	return pdf, nil
 }
@@ -164,10 +164,11 @@ func CreateEstimatePDF(c *gin.Context) {
 	var subTotal float64
 	for _, item := range request.Items {
 		pdfItem := models.PDFLineItem{
-			Description: item.ID,
-			Quantity:    item.Quantity,
-			UnitPrice:   item.CustomPrice,
-			Amount:      item.Amount,
+			Description:   item.ID,
+			Specification: item.Specification,
+			Quantity:      item.Quantity,
+			UnitPrice:     item.CustomPrice,
+			Amount:        item.Amount,
 		}
 		estimate.Items = append(estimate.Items, pdfItem)
 		subTotal += item.Amount
@@ -268,22 +269,25 @@ func CreatePDF(c *gin.Context) {
 		Title:     "廃棄物処理に関する見積書",
 		Items: []models.PDFLineItem{
 			{
-				Description: "オフィスチェア",
-				Quantity:    10,
-				UnitPrice:   1500,
-				Amount:      15000,
+				Description:   "オフィスチェア",
+				Specification: "幅600×奥行600×高さ900mm",
+				Quantity:      10,
+				UnitPrice:     1500,
+				Amount:        15000,
 			},
 			{
-				Description: "会議用テーブル",
-				Quantity:    3,
-				UnitPrice:   4000,
-				Amount:      12000,
+				Description:   "会議用テーブル",
+				Specification: "1800×900×700mm 天板木製",
+				Quantity:      3,
+				UnitPrice:     4000,
+				Amount:        12000,
 			},
 			{
-				Description: "収集運搬費",
-				Quantity:    1,
-				UnitPrice:   20000,
-				Amount:      20000,
+				Description:   "収集運搬費",
+				Specification: "2tトラック使用",
+				Quantity:      1,
+				UnitPrice:     20000,
+				Amount:        20000,
 			},
 		},
 		SubTotal: 47000,

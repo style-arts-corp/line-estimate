@@ -18,10 +18,11 @@ type PDFRequestCustomer struct {
 
 // PDFRequestItem represents each item from frontend
 type PDFRequestItem struct {
-	ID          string  `json:"id"`
-	Quantity    float64 `json:"quantity"`
-	CustomPrice float64 `json:"customPrice"`
-	Amount      float64 `json:"amount"`
+	ID            string  `json:"id"`
+	Specification string  `json:"specification"`
+	Quantity      float64 `json:"quantity"`
+	CustomPrice   float64 `json:"customPrice"`
+	Amount        float64 `json:"amount"`
 }
 
 // PDFImage represents image data from frontend

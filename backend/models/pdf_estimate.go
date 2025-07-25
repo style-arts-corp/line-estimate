@@ -31,11 +31,12 @@ type PDFCustomerInfo struct {
 
 // PDFLineItem represents each item in the estimate PDF
 type PDFLineItem struct {
-	Description string  `json:"description"`
-	Quantity    float64 `json:"quantity"`
-	Unit        string  `json:"unit"`
-	UnitPrice   float64 `json:"unit_price"`
-	Amount      float64 `json:"amount"`
+	Description   string  `json:"description"`
+	Specification string  `json:"specification"`
+	Quantity      float64 `json:"quantity"`
+	Unit          string  `json:"unit"`
+	UnitPrice     float64 `json:"unit_price"`
+	Amount        float64 `json:"amount"`
 }
 
 // PDFCompanyInfo represents the issuing company information

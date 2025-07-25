@@ -22,73 +22,210 @@ func NewPDFHelper(pdf *gopdf.GoPdf) *PDFHelper {
 
 // DrawHeader draws the header section of the estimate
 func (h *PDFHelper) DrawHeader(estimate *models.PDFEstimate) error {
-	// Title "見積書"
-	h.pdf.SetX(250)
-	h.pdf.SetY(40)
-	if err := h.pdf.SetFont("noto-sans", "", 24); err != nil {
+	// Title "御見積書" with underline
+	h.pdf.SetX(240)
+	h.pdf.SetY(50)
+	if err := h.pdf.SetFont("noto-sans", "", 28); err != nil {
 		return err
 	}
-	h.pdf.Cell(nil, "見積書")
+	h.pdf.Cell(nil, "御　見　積　書")
 
-	// Estimate number
-	h.pdf.SetX(400)
-	h.pdf.SetY(80)
-	if err := h.pdf.SetFont("noto-sans", "", 10); err != nil {
-		return err
-	}
-	h.pdf.Cell(nil, fmt.Sprintf("見積番号：%s", estimate.EstimateNo))
-
-	// Issue date
-	h.pdf.SetX(400)
-	h.pdf.SetY(100)
-	h.pdf.Cell(nil, fmt.Sprintf("発行日：%s", estimate.IssueDate.Format("2006年1月2日")))
-
-	// Draw horizontal line
+	// Draw underline for title
 	h.pdf.SetLineWidth(1)
-	h.pdf.Line(50, 130, 545, 130)
+	h.pdf.Line(210, 80, 460, 80)
+	h.pdf.Line(210, 82, 460, 82)
+
+	// // Company info (right side)
+	// if err := h.pdf.SetFont("noto-sans", "", 10); err != nil {
+	// 	return err
+	// }
+
+	// // Issue date in 令和 format
+	// h.pdf.SetX(450)
+	// h.pdf.SetY(90)
+	// year := estimate.IssueDate.Year()
+	// reiwaYear := year - 2018
+	// h.pdf.Cell(nil, fmt.Sprintf("令和 %d年 %d月 %d日",
+	// 	reiwaYear,
+	// 	estimate.IssueDate.Month(),
+	// 	estimate.IssueDate.Day()))
+
+	// // Company name
+	// h.pdf.SetX(400)
+	// h.pdf.SetY(100)
+	// if err := h.pdf.SetFont("noto-sans", "", 12); err != nil {
+	// 	return err
+	// }
+	// h.pdf.Cell(nil, "株式会社　丸共")
+
+	// // Representative
+	// h.pdf.SetX(400)
+	// h.pdf.SetY(110)
+	// if err := h.pdf.SetFont("noto-sans", "", 10); err != nil {
+	// 	return err
+	// }
+	// h.pdf.Cell(nil, "代表取締役　金内宏彰")
+
+	// // Address
+	// h.pdf.SetX(400)
+	// h.pdf.SetY(120)
+	// if err := h.pdf.SetFont("noto-sans", "", 9); err != nil {
+	// 	return err
+	// }
+	// h.pdf.Cell(nil, "〒940-0004 長岡市高見町3009番地5")
+
+	// // Phone
+	// h.pdf.SetX(400)
+	// h.pdf.SetY(135)
+	// h.pdf.Cell(nil, "PHONE : 090-8836-0462")
+
+	// // Email
+	// h.pdf.SetX(400)
+	// h.pdf.SetY(145)
+	// h.pdf.Cell(nil, "MAIL : sakai@marukyou.com")
 
 	return nil
 }
 
 // DrawCustomerInfo draws the customer information section
 func (h *PDFHelper) DrawCustomerInfo(estimate *models.PDFEstimate) error {
-	if err := h.pdf.SetFont("noto-sans", "", 12); err != nil {
+	// Draw horizontal line under header
+	h.pdf.SetLineWidth(1)
+	h.pdf.Line(50, 130, 545, 130)
+
+	// Customer name with 御中
+	h.pdf.SetX(250)
+	h.pdf.SetY(150)
+	if err := h.pdf.SetFont("noto-sans", "", 16); err != nil {
 		return err
 	}
+	h.pdf.Cell(nil, "御中")
 
-	// Customer company name
-	h.pdf.SetX(50)
-	h.pdf.SetY(160)
-	h.pdf.Cell(nil, estimate.Customer.CompanyName)
+	// Draw underline for 御中
+	h.pdf.SetLineWidth(1)
+	h.pdf.Line(50, 165, 290, 165)
 
-	// Customer address
+	// Standard greeting texts
 	h.pdf.SetX(50)
 	h.pdf.SetY(180)
-	if err := h.pdf.SetFont("noto-sans", "", 10); err != nil {
+	if err := h.pdf.SetFont("noto-sans", "", 11); err != nil {
 		return err
 	}
-	h.pdf.Cell(nil, fmt.Sprintf("〒%s", estimate.Customer.PostalCode))
+	h.pdf.Cell(nil, "下記のとおり御見積申し上げます。")
 
 	h.pdf.SetX(50)
 	h.pdf.SetY(195)
-	h.pdf.Cell(nil, estimate.Customer.Address)
+	h.pdf.Cell(nil, "何卒御下命の程お願い申し上げます。")
 
-	// Customer TEL/FAX
-	h.pdf.SetX(50)
-	h.pdf.SetY(215)
-	h.pdf.Cell(nil, fmt.Sprintf("TEL: %s", estimate.Customer.Tel))
+	return nil
+}
 
-	h.pdf.SetX(50)
-	h.pdf.SetY(230)
-	h.pdf.Cell(nil, fmt.Sprintf("FAX: %s", estimate.Customer.Fax))
+// DrawEstimateInfo draws the estimate information section
+func (h *PDFHelper) DrawEstimateInfo(estimate *models.PDFEstimate) error {
+	startY := 220.0
+	leftX := 50.0
+	labelWidth := 80.0
 
-	// Recipient name
-	h.pdf.SetX(400)
-	h.pdf.SetY(160)
+	if err := h.pdf.SetFont("noto-sans", "", 10); err != nil {
+		return err
+	}
+
+	// 場所 (Location)
+	h.pdf.SetX(leftX)
+	h.pdf.SetY(startY)
+	h.pdf.Cell(nil, "場　　所")
+	h.pdf.SetX(leftX + labelWidth)
+	h.pdf.Line(leftX, startY+10, leftX+250, startY+10)
+
+	// 期日 (Due Date)
+	h.pdf.SetX(leftX)
+	h.pdf.SetY(startY + 20)
+	h.pdf.Cell(nil, "期　　日")
+	h.pdf.SetX(leftX + labelWidth)
+	h.pdf.Line(leftX, startY+30, leftX+250, startY+30)
+
+	// 取引方法 (Transaction Method)
+	h.pdf.SetX(leftX)
+	h.pdf.SetY(startY + 40)
+	h.pdf.Cell(nil, "取引方法")
+	h.pdf.SetX(leftX + labelWidth)
+	h.pdf.Cell(nil, "当社規定による")
+	h.pdf.Line(leftX, startY+50, leftX+250, startY+50)
+
+	// 有効期限 (Validity Period)
+	h.pdf.SetX(leftX)
+	h.pdf.SetY(startY + 60)
+	h.pdf.Cell(nil, "有効期限")
+	h.pdf.SetX(leftX + labelWidth)
+	// Calculate validity date (30 days from issue date by default)
+	validityDate := estimate.IssueDate.AddDate(0, 1, 0) // 1 month
+	reiwaYear := validityDate.Year() - 2018
+	h.pdf.Cell(nil, fmt.Sprintf("令和 %d 年 %d 月 %d 日迄",
+		reiwaYear,
+		validityDate.Month(),
+		validityDate.Day()))
+	h.pdf.Line(leftX, startY+70, leftX+250, startY+70)
+
+	// 廃棄物搬出・収集運搬・処分 (Waste disposal info)
+	h.pdf.Line(leftX, startY+78, leftX+500, startY+78)
+	h.pdf.Line(leftX, startY+80, leftX+500, startY+80)
+	h.pdf.SetX(leftX + 100)
+	h.pdf.SetY(startY + 80)
+	if err := h.pdf.SetFont("noto-sans", "", 20); err != nil {
+		return err
+	}
+	h.pdf.Cell(nil, "廃棄物搬出・収集運搬・処分")
+	h.pdf.Line(leftX, startY+100, leftX+500, startY+100)
+	h.pdf.Line(leftX, startY+102, leftX+500, startY+102)
+
+	return nil
+}
+
+// DrawTotalAmount draws the large total amount display with stamp box
+func (h *PDFHelper) DrawTotalAmount(total float64) error {
+	// Draw total amount box
+	boxX := 50.0
+	boxY := 330.0
+	boxWidth := 300.0
+	boxHeight := 40.0
+
+	// Draw border for total amount
+	h.pdf.SetLineWidth(1)
+	h.pdf.SetStrokeColor(0, 0, 0)
+	h.pdf.RectFromUpperLeftWithStyle(boxX, boxY, boxWidth, boxHeight, "D")
+
+	// Draw label
+	h.pdf.SetX(boxX + 10)
+	h.pdf.SetY(boxY + 15)
 	if err := h.pdf.SetFont("noto-sans", "", 14); err != nil {
 		return err
 	}
-	h.pdf.Cell(nil, estimate.Recipient)
+	h.pdf.Cell(nil, fmt.Sprintf("合計金額   ¥ %s", FormatCurrency(total)))
+
+	// Draw stamp box
+	stampBoxX := 400.0
+	stampBoxY := 330.0
+	stampBoxWidth := 100.0
+	stampBoxHeight := 40.0
+
+	// Draw outer border
+	h.pdf.SetLineWidth(1)
+	h.pdf.RectFromUpperLeftWithStyle(stampBoxX, stampBoxY, stampBoxWidth, stampBoxHeight, "D")
+
+	// Draw inner divider
+	h.pdf.Line(stampBoxX+stampBoxWidth/2, stampBoxY, stampBoxX+stampBoxWidth/2, stampBoxY+stampBoxHeight)
+
+	// Draw labels
+	h.pdf.SetX(stampBoxX + 2)
+	h.pdf.SetY(stampBoxY + 2)
+	if err := h.pdf.SetFont("noto-sans", "", 9); err != nil {
+		return err
+	}
+	h.pdf.Cell(nil, "検印")
+
+	h.pdf.SetX(stampBoxX + stampBoxWidth/2 + 2)
+	h.pdf.SetY(stampBoxY + 2)
+	h.pdf.Cell(nil, "担当")
 
 	return nil
 }
@@ -122,10 +259,11 @@ func (h *PDFHelper) DrawTable(estimate *models.PDFEstimate, startY float64) (flo
 	table := h.pdf.NewTableLayout(marginLeft, startY, rowHeight, maxRows)
 
 	// Add columns to the table (total width: 495 to match header)
-	table.AddColumn("品目", 235, "left")
-	table.AddColumn("数量", 70, "right")
-	table.AddColumn("単価（円）", 95, "right")
-	table.AddColumn("金額（円）", 95, "right")
+	table.AddColumn("項　　目", 180, "left")
+	table.AddColumn("数量", 50, "right")
+	table.AddColumn("単価", 70, "right")
+	table.AddColumn("金額", 70, "right")
+	table.AddColumn("仕様", 125, "left")
 
 	// Set the style for table header
 	table.SetHeaderStyle(gopdf.CellStyle{
@@ -168,11 +306,18 @@ func (h *PDFHelper) DrawTable(estimate *models.PDFEstimate, startY float64) (flo
 		unitPriceStr := FormatCurrency(item.UnitPrice)
 		amountStr := FormatCurrency(item.Amount)
 
+		// Use Specification field if available, otherwise empty
+		specification := ""
+		if item.Specification != "" {
+			specification = item.Specification
+		}
+
 		table.AddRow([]string{
 			item.Description,
 			quantityStr,
 			unitPriceStr,
 			amountStr,
+			specification,
 		})
 	}
 
@@ -182,15 +327,16 @@ func (h *PDFHelper) DrawTable(estimate *models.PDFEstimate, startY float64) (flo
 		"",
 		"小計",
 		FormatCurrency(estimate.SubTotal),
+		"",
 	})
 
 	// Add tax row
-	taxLabel := fmt.Sprintf("消費税（%.0f%%）", estimate.TaxRate*100)
 	table.AddRow([]string{
 		"",
 		"",
-		taxLabel,
+		"消費税",
 		FormatCurrency(estimate.Tax),
+		"",
 	})
 
 	// Add total row
@@ -199,6 +345,7 @@ func (h *PDFHelper) DrawTable(estimate *models.PDFEstimate, startY float64) (flo
 		"",
 		"合計金額",
 		FormatCurrency(estimate.Total),
+		"",
 	})
 
 	// Draw the table
@@ -240,7 +387,7 @@ func (h *PDFHelper) DrawTotals(estimate *models.PDFEstimate, startY float64) err
 	// Tax
 	h.pdf.SetX(350)
 	h.pdf.SetY(startY + 20)
-	h.pdf.Cell(nil, fmt.Sprintf("消費税（%.0f%%）", estimate.TaxRate*100))
+	h.pdf.Cell(nil, "消費税")
 	h.pdf.SetX(480)
 	h.pdf.Cell(nil, FormatCurrency(estimate.Tax))
 
@@ -266,21 +413,22 @@ func (h *PDFHelper) DrawRemarks(remarks []string, startY float64) error {
 	if err := h.pdf.SetFont("noto-sans", "", 9); err != nil {
 		return err
 	}
+	remarksBoxY := 700.0
 
 	// Draw remarks box with fill
 	h.pdf.SetLineWidth(1.0)
 	h.pdf.SetStrokeColor(0, 0, 0)     // Black border
 	h.pdf.SetFillColor(255, 255, 255) // White fill
-	h.pdf.RectFromUpperLeftWithStyle(50, startY, 495, 100, "FD")
+	h.pdf.RectFromUpperLeftWithStyle(50, remarksBoxY, 495, 100, "FD")
 
 	// Remarks title
 	h.pdf.SetX(55)
-	h.pdf.SetY(startY + 10)
+	h.pdf.SetY(remarksBoxY + 10)
 	h.pdf.SetTextColor(0, 0, 0) // Ensure text is black
 	h.pdf.Cell(nil, "【備考】")
 
 	// Remarks content
-	currentY := startY + 25
+	currentY := remarksBoxY + 25
 	for _, remark := range remarks {
 		h.pdf.SetX(55)
 		h.pdf.SetY(currentY)
