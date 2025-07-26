@@ -80,43 +80,6 @@ func GenerateEstimatePDF(estimate *models.PDFEstimate) (*gopdf.GoPdf, error) {
 		}
 	}
 
-	// Draw company seal stamp area on the first page
-	// Position it in the right side, below the company info
-	sealX := 480.0
-	sealY := 130.0
-	sealSize := 50.0
-	
-	// Draw circle for company seal
-	pdf.SetLineWidth(2)
-	pdf.SetStrokeColor(200, 0, 0) // Red color for seal
-	centerX := sealX + sealSize/2
-	centerY := sealY + sealSize/2
-	radius := sealSize / 2
-	
-	// Draw circle (approximate with many sided polygon)
-	steps := 36
-	for i := 0; i <= steps; i++ {
-		angle1 := float64(i) * 2.0 * 3.14159 / float64(steps)
-		angle2 := float64(i+1) * 2.0 * 3.14159 / float64(steps)
-		x1 := centerX + radius*math.Cos(angle1)
-		y1 := centerY + radius*math.Sin(angle1)
-		x2 := centerX + radius*math.Cos(angle2)
-		y2 := centerY + radius*math.Sin(angle2)
-		if i < steps {
-			pdf.Line(x1, y1, x2, y2)
-		}
-	}
-	
-	// Draw "丸共" text in the seal
-	pdf.SetX(sealX + 12)
-	pdf.SetY(sealY + 28)
-	if err := pdf.SetFont("noto-sans", "", 14); err != nil {
-		return nil, err
-	}
-	pdf.SetTextColor(200, 0, 0) // Red text
-	pdf.Cell(nil, "丸共")
-	pdf.SetTextColor(0, 0, 0) // Reset to black
-
 	return pdf, nil
 }
 

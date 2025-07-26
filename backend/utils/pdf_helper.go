@@ -3,6 +3,7 @@ package utils
 import (
 	"bytes"
 	"fmt"
+	"math"
 	"strings"
 
 	"github.com/signintech/gopdf"
@@ -35,67 +36,45 @@ func (h *PDFHelper) DrawHeader(estimate *models.PDFEstimate) error {
 	h.pdf.Line(210, 80, 460, 80)
 	h.pdf.Line(210, 82, 460, 82)
 
-	// // Company info (right side)
-	// if err := h.pdf.SetFont("noto-sans", "", 10); err != nil {
-	// 	return err
-	// }
+	// Company info (right side)
+	if err := h.pdf.SetFont("noto-sans", "", 10); err != nil {
+		return err
+	}
 
-	// // Issue date in 令和 format
-	// h.pdf.SetX(450)
-	// h.pdf.SetY(90)
-	// year := estimate.IssueDate.Year()
-	// reiwaYear := year - 2018
-	// h.pdf.Cell(nil, fmt.Sprintf("令和 %d年 %d月 %d日",
-	// 	reiwaYear,
-	// 	estimate.IssueDate.Month(),
-	// 	estimate.IssueDate.Day()))
+	// Issue date in 令和 format
+	h.pdf.SetX(460)
+	h.pdf.SetY(130)
+	year := estimate.IssueDate.Year()
+	reiwaYear := year - 2018
+	h.pdf.Cell(nil, fmt.Sprintf("令和 %d年 %d月 %d日",
+		reiwaYear,
+		estimate.IssueDate.Month(),
+		estimate.IssueDate.Day()))
 
-	// // Company name
-	// h.pdf.SetX(400)
-	// h.pdf.SetY(100)
-	// if err := h.pdf.SetFont("noto-sans", "", 12); err != nil {
-	// 	return err
-	// }
-	// h.pdf.Cell(nil, "株式会社　丸共")
+	// Company info with stamp image
+	h.pdf.Image("../handlers/company-info-with-stamp.png", 380, 135, &gopdf.Rect{
+		W: 150,
+		H: 100,
+	})
 
-	// // Representative
-	// h.pdf.SetX(400)
-	// h.pdf.SetY(110)
-	// if err := h.pdf.SetFont("noto-sans", "", 10); err != nil {
-	// 	return err
-	// }
-	// h.pdf.Cell(nil, "代表取締役　金内宏彰")
+	// Phone
+	h.pdf.SetX(400)
+	h.pdf.SetY(185)
+	h.pdf.Cell(nil, "PHONE : 090-8836-0462")
 
-	// // Address
-	// h.pdf.SetX(400)
-	// h.pdf.SetY(120)
-	// if err := h.pdf.SetFont("noto-sans", "", 9); err != nil {
-	// 	return err
-	// }
-	// h.pdf.Cell(nil, "〒940-0004 長岡市高見町3009番地5")
-
-	// // Phone
-	// h.pdf.SetX(400)
-	// h.pdf.SetY(135)
-	// h.pdf.Cell(nil, "PHONE : 090-8836-0462")
-
-	// // Email
-	// h.pdf.SetX(400)
-	// h.pdf.SetY(145)
-	// h.pdf.Cell(nil, "MAIL : sakai@marukyou.com")
+	// Email
+	h.pdf.SetX(400)
+	h.pdf.SetY(195)
+	h.pdf.Cell(nil, "MAIL : sakai@marukyou.com")
 
 	return nil
 }
 
 // DrawCustomerInfo draws the customer information section
 func (h *PDFHelper) DrawCustomerInfo(estimate *models.PDFEstimate) error {
-	// Draw horizontal line under header
-	h.pdf.SetLineWidth(1)
-	h.pdf.Line(50, 130, 545, 130)
-
 	// Customer name with 御中
 	h.pdf.SetX(250)
-	h.pdf.SetY(150)
+	h.pdf.SetY(100)
 	if err := h.pdf.SetFont("noto-sans", "", 16); err != nil {
 		return err
 	}
@@ -103,18 +82,18 @@ func (h *PDFHelper) DrawCustomerInfo(estimate *models.PDFEstimate) error {
 
 	// Draw underline for 御中
 	h.pdf.SetLineWidth(1)
-	h.pdf.Line(50, 165, 290, 165)
+	h.pdf.Line(50, 115, 290, 115)
 
 	// Standard greeting texts
 	h.pdf.SetX(50)
-	h.pdf.SetY(180)
+	h.pdf.SetY(130)
 	if err := h.pdf.SetFont("noto-sans", "", 11); err != nil {
 		return err
 	}
 	h.pdf.Cell(nil, "下記のとおり御見積申し上げます。")
 
 	h.pdf.SetX(50)
-	h.pdf.SetY(195)
+	h.pdf.SetY(145)
 	h.pdf.Cell(nil, "何卒御下命の程お願い申し上げます。")
 
 	return nil
@@ -122,7 +101,7 @@ func (h *PDFHelper) DrawCustomerInfo(estimate *models.PDFEstimate) error {
 
 // DrawEstimateInfo draws the estimate information section
 func (h *PDFHelper) DrawEstimateInfo(estimate *models.PDFEstimate) error {
-	startY := 220.0
+	startY := 170.0
 	leftX := 50.0
 	labelWidth := 80.0
 
@@ -185,9 +164,9 @@ func (h *PDFHelper) DrawEstimateInfo(estimate *models.PDFEstimate) error {
 func (h *PDFHelper) DrawTotalAmount(total float64) error {
 	// Draw total amount box
 	boxX := 50.0
-	boxY := 330.0
+	boxY := 280.0
 	boxWidth := 300.0
-	boxHeight := 40.0
+	boxHeight := 50.0
 
 	// Draw border for total amount
 	h.pdf.SetLineWidth(1)
@@ -204,9 +183,9 @@ func (h *PDFHelper) DrawTotalAmount(total float64) error {
 
 	// Draw stamp box
 	stampBoxX := 400.0
-	stampBoxY := 330.0
+	stampBoxY := 280.0
 	stampBoxWidth := 100.0
-	stampBoxHeight := 40.0
+	stampBoxHeight := 50.0
 
 	// Draw outer border
 	h.pdf.SetLineWidth(1)
@@ -227,13 +206,36 @@ func (h *PDFHelper) DrawTotalAmount(total float64) error {
 	h.pdf.SetY(stampBoxY + 2)
 	h.pdf.Cell(nil, "担当")
 
+	// Draw company seal stamp area on the first page
+	// Position it in the right side, below the company info
+	sealX := 455.0
+	sealY := 290.0
+	sealSize := 37.0
+
+	// Draw circle for company seal
+	h.pdf.SetLineWidth(2)
+	h.pdf.SetStrokeColor(200, 0, 0) // Red color for seal
+
+	// Draw circle using Oval function
+	h.pdf.Oval(sealX, sealY, sealSize, sealSize)
+
+	// 担当者 のはんこ
+	h.pdf.SetX(sealX + 4)
+	h.pdf.SetY(sealY + 14)
+	if err := h.pdf.SetFont("noto-sans", "", 10); err != nil {
+		return err
+	}
+	h.pdf.SetTextColor(200, 0, 0) // Red text
+	h.pdf.Cell(nil, "担当者")
+	h.pdf.SetTextColor(0, 0, 0) // Reset to black
+
 	return nil
 }
 
 // DrawTitle draws the estimate title
 func (h *PDFHelper) DrawTitle(title string) error {
 	h.pdf.SetX(50)
-	h.pdf.SetY(270)
+	h.pdf.SetY(220)
 	if err := h.pdf.SetFont("noto-sans", "", 14); err != nil {
 		return err
 	}
@@ -259,7 +261,7 @@ func (h *PDFHelper) DrawTable(estimate *models.PDFEstimate, startY float64) (flo
 	table := h.pdf.NewTableLayout(marginLeft, startY, rowHeight, maxRows)
 
 	// Add columns to the table (total width: 495 to match header)
-	table.AddColumn("項　　目", 180, "left")
+	table.AddColumn("項目", 180, "left")
 	table.AddColumn("数量", 50, "right")
 	table.AddColumn("単価", 70, "right")
 	table.AddColumn("金額", 70, "right")
