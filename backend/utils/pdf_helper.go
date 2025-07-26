@@ -51,16 +51,25 @@ func (h *PDFHelper) DrawHeader(estimate *models.PDFEstimate) error {
 		estimate.IssueDate.Day()))
 
 	// Company info with stamp image
-	// h.pdf.Image("./company-info-with-stamp.png", 380, 135, nil)
+	// Use the path that works in Docker container
+	imageRect := &gopdf.Rect{
+		W: 170, // 幅170ポイント
+		H: 70,  // 高さ70ポイント
+	}
+	imageErr := h.pdf.Image("/app/utils/company-info-with-stamp.png", 390, 150, imageRect)
+	if imageErr != nil {
+		// Fallback to relative path for local development
+		h.pdf.Image("./utils/company-info-with-stamp.png", 390, 150, imageRect)
+	}
 
 	// Phone
 	h.pdf.SetX(400)
-	h.pdf.SetY(185)
+	h.pdf.SetY(220)
 	h.pdf.Cell(nil, "PHONE : 090-8836-0462")
 
 	// Email
 	h.pdf.SetX(400)
-	h.pdf.SetY(195)
+	h.pdf.SetY(230)
 	h.pdf.Cell(nil, "MAIL : sakai@marukyou.com")
 
 	return nil
