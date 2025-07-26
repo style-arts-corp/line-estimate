@@ -754,6 +754,18 @@ const docTemplate = `{
         "models.PDFInstruction": {
             "type": "object",
             "properties": {
+                "acceptance_check": {
+                    "description": "受付チェック",
+                    "type": "boolean"
+                },
+                "accepted_by": {
+                    "description": "受付者",
+                    "type": "string"
+                },
+                "collection_date": {
+                    "description": "収集日",
+                    "type": "string"
+                },
                 "collector": {
                     "description": "控 - 収集先",
                     "allOf": [
@@ -831,35 +843,50 @@ const docTemplate = `{
                 },
                 "quantity": {
                     "type": "number"
+                },
+                "specification": {
+                    "type": "string"
                 }
             }
         },
         "models.PDFWorkDetails": {
             "type": "object",
             "properties": {
-                "amount": {
+                "collection_amount": {
                     "description": "集金額（税込）",
                     "type": "string"
-                },
-                "contractor": {
-                    "description": "作業伝票",
-                    "type": "string"
-                },
-                "extra_points": {
-                    "description": "税抜@ ポイント",
-                    "type": "boolean"
                 },
                 "manifest": {
                     "description": "マニフェスト",
                     "type": "string"
                 },
-                "manifest_type": {
-                    "description": "Tポイント",
+                "points": {
+                    "description": "ポイント",
                     "type": "string"
                 },
-                "no_recycling_fee": {
-                    "description": "リサイクル券無",
+                "recycling_ticket": {
+                    "description": "リサイクル券",
+                    "type": "string"
+                },
+                "recycling_ticket_no": {
+                    "description": "リサイクル券 無",
                     "type": "boolean"
+                },
+                "tax_excluded_rate": {
+                    "description": "税抜@",
+                    "type": "string"
+                },
+                "v_point": {
+                    "description": "Vポイント",
+                    "type": "string"
+                },
+                "weight": {
+                    "description": "計量",
+                    "type": "string"
+                },
+                "work_slip": {
+                    "description": "作業伝票",
+                    "type": "string"
                 }
             }
         },
