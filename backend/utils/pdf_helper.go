@@ -3,7 +3,6 @@ package utils
 import (
 	"bytes"
 	"fmt"
-	"math"
 	"strings"
 
 	"github.com/signintech/gopdf"
@@ -52,10 +51,7 @@ func (h *PDFHelper) DrawHeader(estimate *models.PDFEstimate) error {
 		estimate.IssueDate.Day()))
 
 	// Company info with stamp image
-	h.pdf.Image("../handlers/company-info-with-stamp.png", 380, 135, &gopdf.Rect{
-		W: 150,
-		H: 100,
-	})
+	// h.pdf.Image("./company-info-with-stamp.png", 380, 135, nil)
 
 	// Phone
 	h.pdf.SetX(400)
@@ -215,9 +211,7 @@ func (h *PDFHelper) DrawTotalAmount(total float64) error {
 	// Draw circle for company seal
 	h.pdf.SetLineWidth(2)
 	h.pdf.SetStrokeColor(200, 0, 0) // Red color for seal
-
-	// Draw circle using Oval function
-	h.pdf.Oval(sealX, sealY, sealSize, sealSize)
+	h.pdf.Oval(sealX, sealY, sealX+sealSize, sealY+sealSize)
 
 	// 担当者 のはんこ
 	h.pdf.SetX(sealX + 4)
