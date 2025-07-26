@@ -65,6 +65,7 @@ export default function ConfirmationPage() {
       }
       const items = state.selectedItems.map(item => ({
         id: item.name,
+        specification: item.specification || '',
         quantity: item.quantity,
         customPrice: item.customPrice,
         amount: item.customPrice * item.quantity
@@ -148,14 +149,21 @@ export default function ConfirmationPage() {
                 <h2 className="text-lg font-semibold text-gray-900 mb-2">廃棄品リスト</h2>
                 <div className="space-y-4">
                   {state.selectedItems.map((item) => (
-                    <div key={item.id} className="flex items-start">
-                      <div className="flex-grow flex justify-between">
-                        <div>
-                          <span className="font-medium text-gray-900">{item.name}</span>
-                          <span className="text-gray-600 ml-2">x{item.quantity}</span>
+                    <div key={item.id} className="flex flex-col gap-1">
+                      <div className="flex items-start">
+                        <div className="flex-grow flex justify-between">
+                          <div>
+                            <span className="font-medium text-gray-900">{item.name}</span>
+                            <span className="text-gray-600 ml-2">x{item.quantity}</span>
+                          </div>
+                          <div className="text-gray-900">¥{(item.customPrice * item.quantity).toLocaleString()}</div>
                         </div>
-                        <div className="text-gray-900">¥{(item.customPrice * item.quantity).toLocaleString()}</div>
                       </div>
+                      {item.specification && (
+                        <div className="text-sm text-gray-600 ml-4">
+                          備考: {item.specification}
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>

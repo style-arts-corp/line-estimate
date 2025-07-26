@@ -8,6 +8,7 @@ export interface Item {
 export interface SelectedItem extends Item {
   quantity: number
   customPrice: number
+  specification?: string
 }
 
 export interface Category {

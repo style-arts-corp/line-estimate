@@ -268,7 +268,7 @@ func (h *PDFHelper) DrawTable(estimate *models.PDFEstimate, startY float64) (flo
 	table.AddColumn("数量", 50, "right")
 	table.AddColumn("単価", 70, "right")
 	table.AddColumn("金額", 70, "right")
-	table.AddColumn("仕様", 125, "left")
+	table.AddColumn("備考", 125, "left")
 
 	// Set the style for table header
 	table.SetHeaderStyle(gopdf.CellStyle{

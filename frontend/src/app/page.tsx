@@ -66,7 +66,7 @@ export default function Home() {
     } else {
       dispatch({
         type: 'ADD_SELECTED_ITEM',
-        payload: { ...item, quantity: 1, customPrice: item.price }
+        payload: { ...item, quantity: 1, customPrice: item.price, specification: '' }
       })
     }
   }
@@ -93,6 +93,13 @@ export default function Home() {
     dispatch({
       type: 'UPDATE_SELECTED_ITEM',
       payload: { id, updates: { name } }
+    })
+  }
+
+  const updateItemSpecification = (id: string, specification: string) => {
+    dispatch({
+      type: 'UPDATE_SELECTED_ITEM',
+      payload: { id, updates: { specification } }
     })
   }
 
@@ -200,6 +207,7 @@ export default function Home() {
               onQuantityChange={updateItemQuantity}
               onPriceChange={updateItemPrice}
               onNameChange={updateItemName}
+              onSpecificationChange={updateItemSpecification}
               onRemove={removeItem}
             />
           </div>

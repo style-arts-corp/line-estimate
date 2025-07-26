@@ -9,6 +9,7 @@ interface SelectedItemsListProps {
   onQuantityChange: (id: string, quantity: number) => void
   onPriceChange: (id: string, price: number) => void
   onNameChange: (id: string, name: string) => void
+  onSpecificationChange: (id: string, specification: string) => void
   onRemove: (id: string) => void
 }
 
@@ -17,6 +18,7 @@ export function SelectedItemsList({
   onQuantityChange,
   onPriceChange,
   onNameChange,
+  onSpecificationChange,
   onRemove,
 }: SelectedItemsListProps) {
   const [editingName, setEditingName] = useState<string | null>(null)
@@ -114,6 +116,18 @@ export function SelectedItemsList({
                     ¥{(item.customPrice * item.quantity).toLocaleString()}
                   </span>
                 </div>
+              </div>
+
+              {/* 備考 */}
+              <div className="flex items-center gap-2 w-full">
+                <label className="text-sm text-gray-700">備考:</label>
+                <input
+                  type="text"
+                  value={item.specification || ''}
+                  onChange={(e) => onSpecificationChange(item.id, e.target.value)}
+                  placeholder="例: 幅600×奥行600×高さ900mm"
+                  className="flex-1 px-2 py-1 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+                />
               </div>
             </div>
 
