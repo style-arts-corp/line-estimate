@@ -94,12 +94,11 @@ export default function InstructionsPage() {
       })),
       memo: state.notes || `収集日: ${state.collectionDate}`,
       work_details: {
-        contractor: "A-123",
-        amount: state.collectionAmountTaxIncluded.toString(),
+        work_slip: "A-123",
+        collection_amount: state.collectionAmountTaxIncluded.toString(),
         manifest: "B-456",
-        manifest_type: "産廃",
-        no_recycling_fee: !state.recycleTicket,
-        extra_points: state.vPointAvailable
+        recycling_ticket_no: !state.recycleTicket,
+        v_point: state.vPointAvailable ? "利用可" : ""
       }
     }
     generateInstructionPDF({
