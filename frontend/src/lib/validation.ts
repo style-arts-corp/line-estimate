@@ -17,8 +17,8 @@ export const instructionsSchema = z.object({
   recycleTicket: z.boolean(),
   collectionAmountTaxIncluded: z.number().min(0, '集金額（税込）は0以上である必要があります'),
   collectionAmountTaxExcluded: z.number().min(0, '集金額（税抜）は0以上である必要があります'),
-  tPointAvailable: z.boolean(),
-  tPointUsage: z.number().min(0, 'Tポイント使用数は0以上である必要があります'),
+  vPointAvailable: z.boolean(),
+  vPointUsage: z.number().min(0, 'Vポイント使用数は0以上である必要があります'),
 })
 
 export const customItemSchema = z.object({

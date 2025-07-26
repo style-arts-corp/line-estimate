@@ -39,8 +39,8 @@ export default function InstructionsPage() {
       recycleTicket: state.recycleTicket,
       collectionAmountTaxIncluded: state.collectionAmountTaxIncluded,
       collectionAmountTaxExcluded: state.collectionAmountTaxExcluded,
-      tPointAvailable: state.tPointAvailable,
-      tPointUsage: state.tPointUsage,
+      vPointAvailable: state.vPointAvailable,
+      vPointUsage: state.vPointUsage,
     } as InstructionsForm,
     onSubmit: async ({ value }) => {
       dispatch({ type: 'SET_COLLECTION_DATE', payload: value.collectionDate })
@@ -51,8 +51,8 @@ export default function InstructionsPage() {
       dispatch({ type: 'SET_RECYCLE_TICKET', payload: value.recycleTicket })
       dispatch({ type: 'SET_COLLECTION_AMOUNT_TAX_INCLUDED', payload: value.collectionAmountTaxIncluded })
       dispatch({ type: 'SET_COLLECTION_AMOUNT_TAX_EXCLUDED', payload: value.collectionAmountTaxExcluded })
-      dispatch({ type: 'SET_T_POINT_AVAILABLE', payload: value.tPointAvailable })
-      dispatch({ type: 'SET_T_POINT_USAGE', payload: value.tPointUsage })
+      dispatch({ type: 'SET_V_POINT_AVAILABLE', payload: value.vPointAvailable })
+      dispatch({ type: 'SET_V_POINT_USAGE', payload: value.vPointUsage })
       dispatch({ type: 'SET_INSTRUCTIONS_SAVED', payload: true })
     },
   })
@@ -99,7 +99,7 @@ export default function InstructionsPage() {
         manifest: "B-456",
         manifest_type: "産廃",
         no_recycling_fee: !state.recycleTicket,
-        extra_points: state.tPointAvailable
+        extra_points: state.vPointAvailable
       }
     }
     generateInstructionPDF({
@@ -385,7 +385,7 @@ export default function InstructionsPage() {
                     <div>
                       <h3 className="text-md font-semibold text-gray-900 mb-2">Tポイント</h3>
                       <div className="space-y-3">
-                        <form.Field name="tPointAvailable">
+                        <form.Field name="vPointAvailable">
                           {(field) => (
                             <div className="flex items-center space-x-2">
                               <input
@@ -405,10 +405,10 @@ export default function InstructionsPage() {
                         </form.Field>
 
                         <form.Field
-                          name="tPointUsage"
+                          name="vPointUsage"
                           validators={{
                             onChange: ({ value }) => {
-                              const result = instructionsSchema.shape.tPointUsage.safeParse(value)
+                              const result = instructionsSchema.shape.vPointUsage.safeParse(value)
                               return result.success ? undefined : result.error.issues[0]?.message
                             },
                           }}
@@ -507,8 +507,8 @@ export default function InstructionsPage() {
                     dispatch({ type: 'SET_RECYCLE_TICKET', payload: formValues.recycleTicket })
                     dispatch({ type: 'SET_COLLECTION_AMOUNT_TAX_INCLUDED', payload: formValues.collectionAmountTaxIncluded })
                     dispatch({ type: 'SET_COLLECTION_AMOUNT_TAX_EXCLUDED', payload: formValues.collectionAmountTaxExcluded })
-                    dispatch({ type: 'SET_T_POINT_AVAILABLE', payload: formValues.tPointAvailable })
-                    dispatch({ type: 'SET_T_POINT_USAGE', payload: formValues.tPointUsage })
+                    dispatch({ type: 'SET_V_POINT_AVAILABLE', payload: formValues.vPointAvailable })
+                    dispatch({ type: 'SET_V_POINT_USAGE', payload: formValues.vPointUsage })
                     dispatch({ type: 'SET_INSTRUCTIONS_SAVED', payload: true })
                     
                     // PDF生成

@@ -20,8 +20,8 @@ export const initialState: AppState = {
   recycleTicket: false,
   collectionAmountTaxIncluded: 0,
   collectionAmountTaxExcluded: 0,
-  tPointAvailable: false,
-  tPointUsage: 0,
+  vPointAvailable: false,
+  vPointUsage: 0,
   quoteImages: [],
 }
 
@@ -136,16 +136,16 @@ export function appReducer(state: AppState, action: AppAction): AppState {
         collectionAmountTaxExcluded: action.payload,
       }
     
-    case 'SET_T_POINT_AVAILABLE':
+    case 'SET_V_POINT_AVAILABLE':
       return {
         ...state,
-        tPointAvailable: action.payload,
+        vPointAvailable: action.payload,
       }
     
-    case 'SET_T_POINT_USAGE':
+    case 'SET_V_POINT_USAGE':
       return {
         ...state,
-        tPointUsage: action.payload,
+        vPointUsage: action.payload,
       }
     
     case 'ADD_QUOTE_IMAGE':

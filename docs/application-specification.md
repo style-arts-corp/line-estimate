@@ -348,8 +348,8 @@ interface AppState {
   recycleTicket: boolean;
   collectionAmountTaxIncluded: number;
   collectionAmountTaxExcluded: number;
-  tPointAvailable: boolean;
-  tPointUsage: number;
+  vPointAvailable: boolean;
+  vPointUsage: number;
 }
 
 // 顧客情報の型定義
@@ -385,8 +385,8 @@ interface InstructionsInfo {
   recycleTicket: boolean;         // リサイクル券
   collectionAmountTaxIncluded: number;    // 集金額（税込）
   collectionAmountTaxExcluded: number;    // 集金額（税抜）
-  tPointAvailable: boolean;       // Tポイント
-  tPointUsage: number;           // 使用するポイント数
+  vPointAvailable: boolean;       // Vポイント
+  vPointUsage: number;           // 使用するポイント数
 }
 ```
 
@@ -402,8 +402,8 @@ export const instructionsSchema = z.object({
   recycleTicket: z.boolean(),
   collectionAmountTaxIncluded: z.number().min(0, '集金額（税込）は0以上である必要があります'),
   collectionAmountTaxExcluded: z.number().min(0, '集金額（税抜）は0以上である必要があります'),
-  tPointAvailable: z.boolean(),
-  tPointUsage: z.number().min(0, 'Tポイント使用数は0以上である必要があります'),
+  vPointAvailable: z.boolean(),
+  vPointUsage: z.number().min(0, 'Vポイント使用数は0以上である必要があります'),
 })
 ```
 
@@ -558,8 +558,8 @@ const addWorkOrder = async (workOrderData) => {
       workOrderData.recycleTicket ? '必要' : '不要',
       workOrderData.collectionAmountTaxIncluded,
       workOrderData.collectionAmountTaxExcluded,
-      workOrderData.tPointAvailable ? '有' : '無',
-      workOrderData.tPointUsage,
+      workOrderData.vPointAvailable ? '有' : '無',
+      workOrderData.vPointUsage,
       workOrderData.assignedStaff,
       workOrderData.notes
     ]

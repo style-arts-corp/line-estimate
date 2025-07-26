@@ -14,8 +14,8 @@ export interface AppState {
   recycleTicket: boolean
   collectionAmountTaxIncluded: number
   collectionAmountTaxExcluded: number
-  tPointAvailable: boolean
-  tPointUsage: number
+  vPointAvailable: boolean
+  vPointUsage: number
   quoteImages: QuoteImage[]
 }
 
@@ -37,8 +37,8 @@ export type AppAction =
   | { type: 'SET_RECYCLE_TICKET'; payload: boolean }
   | { type: 'SET_COLLECTION_AMOUNT_TAX_INCLUDED'; payload: number }
   | { type: 'SET_COLLECTION_AMOUNT_TAX_EXCLUDED'; payload: number }
-  | { type: 'SET_T_POINT_AVAILABLE'; payload: boolean }
-  | { type: 'SET_T_POINT_USAGE'; payload: number }
+  | { type: 'SET_V_POINT_AVAILABLE'; payload: boolean }
+  | { type: 'SET_V_POINT_USAGE'; payload: number }
   | { type: 'ADD_QUOTE_IMAGE'; payload: QuoteImage }
   | { type: 'REMOVE_QUOTE_IMAGE'; payload: string }
   | { type: 'SET_QUOTE_IMAGES'; payload: QuoteImage[] }

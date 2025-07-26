@@ -34,8 +34,8 @@ export interface InstructionsInfo {
   recycleTicket: boolean // リサイクル券
   collectionAmountTaxIncluded: number // 集金額（税込）
   collectionAmountTaxExcluded: number // 集金額（税抜）
-  tPointAvailable: boolean // Tポイント
-  tPointUsage: number // 使用するポイント数
+  vPointAvailable: boolean // Vポイント
+  vPointUsage: number // 使用するポイント数
 }
 
 export interface ConsignmentApplication {
