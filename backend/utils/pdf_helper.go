@@ -257,8 +257,8 @@ func (h *PDFHelper) DrawTable(estimate *models.PDFEstimate, startY float64) (flo
 	marginLeft := 50.0
 	rowHeight := 25.0
 	items := estimate.Items
-	// Add 3 more rows for subtotal, tax, and total
-	maxRows := len(items) + 3
+	// Fixed 10 rows for items + 3 rows for subtotal, tax, and total
+	maxRows := 10 + 3
 
 	// Create a new table layout
 	table := h.pdf.NewTableLayout(marginLeft, startY, rowHeight, maxRows)
@@ -302,28 +302,41 @@ func (h *PDFHelper) DrawTable(estimate *models.PDFEstimate, startY float64) (flo
 		FontSize:  10,
 	})
 
-	// Add rows to the table
-	for _, item := range items {
-		quantityStr := fmt.Sprintf("%.0f", item.Quantity)
-		if item.Unit != "" {
-			quantityStr = fmt.Sprintf("%.0f%s", item.Quantity, item.Unit)
-		}
-		unitPriceStr := FormatCurrency(item.UnitPrice)
-		amountStr := FormatCurrency(item.Amount)
+	// Add rows to the table (fixed 10 rows for items)
+	for i := 0; i < 10; i++ {
+		if i < len(items) {
+			// Add actual item data
+			item := items[i]
+			quantityStr := fmt.Sprintf("%.0f", item.Quantity)
+			if item.Unit != "" {
+				quantityStr = fmt.Sprintf("%.0f%s", item.Quantity, item.Unit)
+			}
+			unitPriceStr := FormatCurrency(item.UnitPrice)
+			amountStr := FormatCurrency(item.Amount)
 
-		// Use Specification field if available, otherwise empty
-		specification := ""
-		if item.Specification != "" {
-			specification = item.Specification
-		}
+			// Use Specification field if available, otherwise empty
+			specification := ""
+			if item.Specification != "" {
+				specification = item.Specification
+			}
 
-		table.AddRow([]string{
-			item.Description,
-			quantityStr,
-			unitPriceStr,
-			amountStr,
-			specification,
-		})
+			table.AddRow([]string{
+				item.Description,
+				quantityStr,
+				unitPriceStr,
+				amountStr,
+				specification,
+			})
+		} else {
+			// Add empty row
+			table.AddRow([]string{
+				"",
+				"",
+				"",
+				"",
+				"",
+			})
+		}
 	}
 
 	// Add subtotal row
@@ -357,15 +370,15 @@ func (h *PDFHelper) DrawTable(estimate *models.PDFEstimate, startY float64) (flo
 	table.DrawTable()
 
 	// Draw a thicker line above subtotal row
-	// Position: header (1 row) + item rows - 1
-	subtotalRowY := startY + rowHeight + (rowHeight * float64(len(items)))
+	// Position: header (1 row) + 10 item rows
+	subtotalRowY := startY + rowHeight + (rowHeight * float64(10))
 	h.pdf.SetLineWidth(1.5) // Thicker line
 	h.pdf.SetStrokeColor(0, 0, 0)
 	h.pdf.Line(marginLeft, subtotalRowY, marginLeft+495, subtotalRowY)
 
 	// Draw a thicker line above total row
-	// Position: header (1 row) + item rows + subtotal row + tax row
-	totalRowY := startY + rowHeight + (rowHeight * float64(len(items)+2))
+	// Position: header (1 row) + 10 item rows + subtotal row + tax row
+	totalRowY := startY + rowHeight + (rowHeight * float64(10+2))
 	h.pdf.SetLineWidth(1.5) // Thicker line
 	h.pdf.SetStrokeColor(0, 0, 0)
 	h.pdf.Line(marginLeft, totalRowY, marginLeft+495, totalRowY)

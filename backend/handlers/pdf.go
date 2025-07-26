@@ -68,7 +68,7 @@ func GenerateEstimatePDF(estimate *models.PDFEstimate) (*gopdf.GoPdf, error) {
 	}
 
 	// Draw items table (now includes totals and specification column)
-	tableEndY, err := helper.DrawTable(estimate, 380)
+	tableEndY, err := helper.DrawTable(estimate, 340)
 	if err != nil {
 		return nil, err
 	}
