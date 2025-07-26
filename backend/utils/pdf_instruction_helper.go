@@ -1,6 +1,8 @@
 package utils
 
 import (
+	"fmt"
+
 	"github.com/signintech/gopdf"
 	"line-estimate-backend/models"
 )
@@ -15,54 +17,156 @@ func NewPDFInstructionHelper(pdf *gopdf.GoPdf) *PDFInstructionHelper {
 	return &PDFInstructionHelper{pdf: pdf}
 }
 
-// DrawInstructionHeader draws the header section of the instruction sheet
-func (h *PDFInstructionHelper) DrawInstructionHeader(instruction *models.PDFInstruction, isReceipt bool) error {
-	// Title
-	h.pdf.SetX(50)
-	h.pdf.SetY(40)
-	if err := h.pdf.SetFont("noto-sans", "", 16); err != nil {
+// DrawBothSides draws both the instruction sheet and receipt side by side
+func (h *PDFInstructionHelper) DrawBothSides(instruction *models.PDFInstruction) error {
+	// Draw center divider
+	if err := h.DrawCenterDivider(); err != nil {
 		return err
 	}
 
+	// Draw left side (instruction sheet)
+	if err := h.DrawSection(0, instruction, false); err != nil {
+		return err
+	}
+
+	// Draw right side (receipt)
+	if err := h.DrawSection(420.945, instruction, true); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// DrawSection draws either instruction sheet or receipt based on offsetX
+func (h *PDFInstructionHelper) DrawSection(offsetX float64, instruction *models.PDFInstruction, isReceipt bool) error {
+	// Draw outer border
+	h.pdf.SetLineWidth(1)
+	h.pdf.SetStrokeColor(0, 0, 0)
+	h.pdf.RectFromUpperLeftWithStyle(offsetX+30, 30, 360, 535, "D")
+
+	// Draw header
+	if err := h.DrawHeader(offsetX, instruction, isReceipt); err != nil {
+		return err
+	}
+
+	// Draw collection date
+	if err := h.DrawCollectionDate(offsetX, instruction); err != nil {
+		return err
+	}
+
+	// Draw collector box
+	if err := h.DrawCollectorBox(offsetX, instruction, isReceipt); err != nil {
+		return err
+	}
+
+	// Draw content section
+	if err := h.DrawContentSection(offsetX, instruction.Items); err != nil {
+		return err
+	}
+
+	// Draw footer
+	if err := h.DrawFooter(offsetX, instruction.WorkDetails); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// DrawHeader draws the header section with title, acceptance check, and accepted by
+func (h *PDFInstructionHelper) DrawHeader(offsetX float64, instruction *models.PDFInstruction, isReceipt bool) error {
+	// Header box
+	h.pdf.SetLineWidth(1)
+	h.pdf.RectFromUpperLeftWithStyle(offsetX+30, 30, 360, 40, "D")
+
+	// Title
+	h.pdf.SetX(offsetX + 50)
+	h.pdf.SetY(45)
+	if err := h.pdf.SetFont("noto-sans", "", 16); err != nil {
+		return err
+	}
 	title := "作業指示書"
 	if isReceipt {
 		title = "控"
 	}
 	h.pdf.Cell(nil, title)
 
-	// Receipt date label
-	h.pdf.SetX(180)
-	h.pdf.SetY(40)
+	// Acceptance check box
+	h.pdf.SetLineWidth(1)
+	h.pdf.RectFromUpperLeftWithStyle(offsetX+180, 42, 50, 20, "D")
+	h.pdf.SetX(offsetX + 190)
+	h.pdf.SetY(52)
 	if err := h.pdf.SetFont("noto-sans", "", 10); err != nil {
 		return err
 	}
-	h.pdf.Cell(nil, "受付日")
+	h.pdf.Cell(nil, "受付")
 
-	// Issue date
-	h.pdf.SetX(180)
-	h.pdf.SetY(60)
-	h.pdf.Cell(nil, instruction.IssueDate.Format("2006年1月2日"))
+	// Accepted by box
+	h.pdf.RectFromUpperLeftWithStyle(offsetX+260, 42, 50, 20, "D")
+	h.pdf.SetX(offsetX + 270)
+	h.pdf.SetY(52)
+	h.pdf.Cell(nil, "受付者")
+
+	// Accepted by value box
+	h.pdf.RectFromUpperLeftWithStyle(offsetX+310, 42, 70, 20, "D")
+	if instruction.AcceptedBy != "" {
+		h.pdf.SetX(offsetX + 320)
+		h.pdf.SetY(52)
+		h.pdf.Cell(nil, instruction.AcceptedBy)
+	}
 
 	return nil
 }
 
-// DrawContactInfo draws the contact information section
-func (h *PDFInstructionHelper) DrawContactInfo(instruction *models.PDFInstruction, isReceipt bool) error {
-	if err := h.pdf.SetFont("noto-sans", "", 10); err != nil {
+// DrawCollectionDate draws the collection date section
+func (h *PDFInstructionHelper) DrawCollectionDate(offsetX float64, instruction *models.PDFInstruction) error {
+	// Collection date box
+	h.pdf.SetLineWidth(1)
+	h.pdf.RectFromUpperLeftWithStyle(offsetX+30, 70, 360, 30, "D")
+
+	h.pdf.SetX(offsetX + 40)
+	h.pdf.SetY(82)
+	if err := h.pdf.SetFont("noto-sans", "", 11); err != nil {
 		return err
 	}
+	h.pdf.Cell(nil, "収集日")
 
-	startY := float64(100)
-
-	// Draw box
+	// Draw underline for date
 	h.pdf.SetLineWidth(0.5)
-	h.pdf.Rectangle(50, startY, 200, 120, "D", 0, 0)
+	h.pdf.Line(offsetX+100, 92, offsetX+250, 92)
 
-	// Section title
-	h.pdf.SetX(55)
-	h.pdf.SetY(startY + 10)
-	h.pdf.Cell(nil, "収集先")
+	if instruction.CollectionDate != "" {
+		h.pdf.SetX(offsetX + 110)
+		h.pdf.SetY(82)
+		h.pdf.Cell(nil, instruction.CollectionDate)
+	}
 
+	return nil
+}
+
+// DrawCollectorBox draws the collector information box
+func (h *PDFInstructionHelper) DrawCollectorBox(offsetX float64, instruction *models.PDFInstruction, isReceipt bool) error {
+	// Main box
+	h.pdf.SetLineWidth(1)
+	h.pdf.RectFromUpperLeftWithStyle(offsetX+30, 100, 360, 90, "D")
+
+	// Vertical line for "収集先"
+	h.pdf.Line(offsetX+80, 100, offsetX+80, 190)
+
+	// "収集先" label
+	h.pdf.SetX(offsetX + 45)
+	h.pdf.SetY(130)
+	if err := h.pdf.SetFont("noto-sans", "", 12); err != nil {
+		return err
+	}
+	h.pdf.Cell(nil, "収")
+	h.pdf.SetX(offsetX + 45)
+	h.pdf.SetY(145)
+	h.pdf.Cell(nil, "集")
+	h.pdf.SetX(offsetX + 45)
+	h.pdf.SetY(160)
+	h.pdf.Cell(nil, "先")
+
+	// Get appropriate info
 	var info models.PDFContractorInfo
 	if isReceipt {
 		info = models.PDFContractorInfo(instruction.Collector)
@@ -70,190 +174,200 @@ func (h *PDFInstructionHelper) DrawContactInfo(instruction *models.PDFInstructio
 		info = instruction.Contractor
 	}
 
+	if err := h.pdf.SetFont("noto-sans", "", 10); err != nil {
+		return err
+	}
+
 	// Name
-	h.pdf.SetX(55)
-	h.pdf.SetY(startY + 30)
+	h.pdf.SetX(offsetX + 90)
+	h.pdf.SetY(115)
 	h.pdf.Cell(nil, "名称")
-	h.pdf.SetX(90)
-	h.pdf.SetY(startY + 30)
-	h.pdf.Cell(nil, info.Name)
+	h.pdf.Line(offsetX+120, 125, offsetX+380, 125)
+	if info.Name != "" {
+		h.pdf.SetX(offsetX + 125)
+		h.pdf.SetY(115)
+		h.pdf.Cell(nil, info.Name)
+	}
 
 	// Address
-	h.pdf.SetX(55)
-	h.pdf.SetY(startY + 50)
+	h.pdf.SetX(offsetX + 90)
+	h.pdf.SetY(140)
 	h.pdf.Cell(nil, "住所")
-	h.pdf.SetX(90)
-	h.pdf.SetY(startY + 50)
-	h.pdf.Cell(nil, info.Address)
+	h.pdf.Line(offsetX+120, 150, offsetX+380, 150)
+	if info.Address != "" {
+		h.pdf.SetX(offsetX + 125)
+		h.pdf.SetY(140)
+		h.pdf.Cell(nil, info.Address)
+	}
 
-	// Person in charge
-	h.pdf.SetX(55)
-	h.pdf.SetY(startY + 70)
+	// Person and TEL
+	h.pdf.SetX(offsetX + 90)
+	h.pdf.SetY(165)
 	h.pdf.Cell(nil, "担当")
-	h.pdf.SetX(90)
-	h.pdf.SetY(startY + 70)
-	h.pdf.Cell(nil, info.Person)
+	h.pdf.Line(offsetX+120, 175, offsetX+250, 175)
+	if info.Person != "" {
+		h.pdf.SetX(offsetX + 125)
+		h.pdf.SetY(165)
+		h.pdf.Cell(nil, info.Person)
+	}
 
-	// TEL
-	h.pdf.SetX(150)
-	h.pdf.SetY(startY + 70)
+	h.pdf.SetX(offsetX + 260)
+	h.pdf.SetY(165)
 	h.pdf.Cell(nil, "TEL")
-	h.pdf.SetX(170)
-	h.pdf.SetY(startY + 70)
-	h.pdf.Cell(nil, info.Tel)
-
-	// Draw vertical lines
-	h.pdf.Line(85, startY+20, 85, startY+90)
-	h.pdf.Line(145, startY+60, 145, startY+90)
-
-	// Draw horizontal lines
-	h.pdf.Line(50, startY+20, 250, startY+20)
-	h.pdf.Line(50, startY+40, 250, startY+40)
-	h.pdf.Line(50, startY+60, 250, startY+60)
-	h.pdf.Line(50, startY+90, 250, startY+90)
-
-	return nil
-}
-
-// DrawMemoSection draws the memo section (only for display, not printed)
-func (h *PDFInstructionHelper) DrawMemoSection(memo string) error {
-	if err := h.pdf.SetFont("noto-sans", "", 10); err != nil {
-		return err
-	}
-
-	// Memo title with note
-	h.pdf.SetX(300)
-	h.pdf.SetY(100)
-	h.pdf.Cell(nil, "メモ（印刷されません）")
-
-	// Memo box
-	h.pdf.SetLineWidth(0.5)
-	h.pdf.Rectangle(300, 120, 245, 100, "D", 0, 0)
-
-	// Memo content
-	if memo != "" {
-		h.pdf.SetX(305)
-		h.pdf.SetY(135)
-		if err := h.pdf.SetFont("noto-sans", "", 9); err != nil {
-			return err
-		}
-		h.pdf.Cell(nil, memo)
+	h.pdf.Line(offsetX+285, 175, offsetX+380, 175)
+	if info.Tel != "" {
+		h.pdf.SetX(offsetX + 290)
+		h.pdf.SetY(165)
+		h.pdf.Cell(nil, info.Tel)
 	}
 
 	return nil
 }
 
-// DrawWorkItems draws the work items section
-func (h *PDFInstructionHelper) DrawWorkItems(items []models.PDFWorkItem) error {
-	if err := h.pdf.SetFont("noto-sans", "", 10); err != nil {
+// DrawContentSection draws the content items section
+func (h *PDFInstructionHelper) DrawContentSection(offsetX float64, items []models.PDFWorkItem) error {
+	// Content header box
+	h.pdf.SetLineWidth(1)
+	h.pdf.RectFromUpperLeftWithStyle(offsetX+30, 190, 360, 25, "D")
+
+	h.pdf.SetX(offsetX + 170)
+	h.pdf.SetY(200)
+	if err := h.pdf.SetFont("noto-sans", "", 11); err != nil {
 		return err
 	}
-
-	startY := float64(240)
-
-	// Section title
-	h.pdf.SetX(50)
-	h.pdf.SetY(startY)
 	h.pdf.Cell(nil, "- 内容 -")
 
-	// Draw box for items
-	h.pdf.SetLineWidth(0.5)
-	h.pdf.Rectangle(50, startY+20, 495, 250, "D", 0, 0)
+	// Content items box
+	h.pdf.SetLineWidth(1)
+	h.pdf.RectFromUpperLeftWithStyle(offsetX+30, 215, 360, 250, "D")
 
-	// Draw grid lines (horizontal)
-	for i := 1; i < 10; i++ {
-		y := startY + 20 + float64(i*25)
-		h.pdf.Line(50, y, 545, y)
+	// Draw items
+	if err := h.pdf.SetFont("noto-sans", "", 10); err != nil {
+		return err
 	}
 
-	// Add items
-	currentY := startY + 35
-	for i, item := range items {
-		if i >= 10 {
-			break // Limit to 10 items per page
+	startY := 225.0
+	for i := 0; i < 10; i++ {
+		if i < len(items) {
+			h.pdf.SetX(offsetX + 40)
+			h.pdf.SetY(startY + float64(i*25))
+			h.pdf.Cell(nil, items[i].Description)
 		}
-		h.pdf.SetX(55)
-		h.pdf.SetY(currentY)
-		h.pdf.Cell(nil, item.Description)
-		currentY += 25
 	}
 
 	return nil
 }
 
-// DrawWorkDetails draws the work details section at the bottom
-func (h *PDFInstructionHelper) DrawWorkDetails(details models.PDFWorkDetails) error {
+// DrawFooter draws the footer section with work details
+func (h *PDFInstructionHelper) DrawFooter(offsetX float64, details models.PDFWorkDetails) error {
+	// Footer box
+	h.pdf.SetLineWidth(1)
+	h.pdf.RectFromUpperLeftWithStyle(offsetX+30, 465, 360, 100, "D")
+
 	if err := h.pdf.SetFont("noto-sans", "", 10); err != nil {
 		return err
 	}
 
-	startY := float64(520)
-
-	// Work slip
-	h.pdf.SetX(50)
-	h.pdf.SetY(startY)
+	// Row 1: Work slip and Collection amount
+	h.pdf.SetX(offsetX + 40)
+	h.pdf.SetY(480)
 	h.pdf.Cell(nil, "作業伝票")
-	h.pdf.SetX(110)
-	h.pdf.Cell(nil, details.Contractor)
+	h.pdf.Line(offsetX+90, 490, offsetX+160, 490)
+	if details.WorkSlip != "" {
+		h.pdf.SetX(offsetX + 95)
+		h.pdf.SetY(480)
+		h.pdf.Cell(nil, details.WorkSlip)
+	}
 
-	// Amount
-	h.pdf.SetX(50)
-	h.pdf.SetY(startY + 20)
-	h.pdf.Cell(nil, "計 量")
-	h.pdf.SetX(110)
-	h.pdf.Cell(nil, details.Amount)
+	h.pdf.SetX(offsetX + 210)
+	h.pdf.SetY(480)
+	h.pdf.Cell(nil, "集金額")
+	h.pdf.Line(offsetX+250, 490, offsetX+320, 490)
+	if details.CollectionAmount != "" {
+		h.pdf.SetX(offsetX + 255)
+		h.pdf.SetY(480)
+		h.pdf.Cell(nil, fmt.Sprintf("（税込）%s", details.CollectionAmount))
+	}
 
-	// Collection amount
-	h.pdf.SetX(200)
-	h.pdf.SetY(startY + 20)
-	h.pdf.Cell(nil, "集 金 額")
-	h.pdf.SetX(250)
-	h.pdf.Cell(nil, "（税込）")
+	// Row 2: Weight
+	h.pdf.SetX(offsetX + 40)
+	h.pdf.SetY(505)
+	h.pdf.Cell(nil, "計　量")
+	h.pdf.Line(offsetX+90, 515, offsetX+160, 515)
+	if details.Weight != "" {
+		h.pdf.SetX(offsetX + 95)
+		h.pdf.SetY(505)
+		h.pdf.Cell(nil, details.Weight)
+	}
 
-	// Manifest
-	h.pdf.SetX(50)
-	h.pdf.SetY(startY + 40)
+	// Row 3: Manifest, T-Point, Tax excluded rate
+	h.pdf.SetX(offsetX + 40)
+	h.pdf.SetY(530)
 	h.pdf.Cell(nil, "マニフェスト")
-	h.pdf.SetX(120)
-	h.pdf.Cell(nil, details.Manifest)
+	h.pdf.Line(offsetX+110, 540, offsetX+180, 540)
+	if details.Manifest != "" {
+		h.pdf.SetX(offsetX + 115)
+		h.pdf.SetY(530)
+		h.pdf.Cell(nil, details.Manifest)
+	}
 
-	// T-Point
-	h.pdf.SetX(200)
-	h.pdf.SetY(startY + 40)
+	h.pdf.SetX(offsetX + 210)
+	h.pdf.SetY(530)
 	h.pdf.Cell(nil, "Tポイント")
-	h.pdf.SetX(260)
-	h.pdf.Cell(nil, details.ManifestType)
+	if details.TPoint != "" {
+		h.pdf.SetX(offsetX + 260)
+		h.pdf.SetY(530)
+		h.pdf.Cell(nil, details.TPoint)
+	}
 
-	// Tax info
-	h.pdf.SetX(300)
-	h.pdf.SetY(startY + 40)
+	h.pdf.SetX(offsetX + 310)
+	h.pdf.SetY(530)
 	h.pdf.Cell(nil, "税抜@")
+	if details.TaxExcludedRate != "" {
+		h.pdf.SetX(offsetX + 345)
+		h.pdf.SetY(530)
+		h.pdf.Cell(nil, details.TaxExcludedRate)
+	}
 
-	// Recycling fee
-	h.pdf.SetX(50)
-	h.pdf.SetY(startY + 60)
+	// Row 4: Recycling ticket and Points
+	h.pdf.SetX(offsetX + 40)
+	h.pdf.SetY(545)
 	h.pdf.Cell(nil, "リサイクル券")
+	h.pdf.Line(offsetX+110, 555, offsetX+180, 555)
+	if details.RecyclingTicket != "" {
+		h.pdf.SetX(offsetX + 115)
+		h.pdf.SetY(545)
+		h.pdf.Cell(nil, details.RecyclingTicket)
+	}
 
-	if details.NoRecyclingFee {
-		h.pdf.SetX(120)
+	if details.RecyclingTicketNo {
+		h.pdf.SetX(offsetX + 210)
+		h.pdf.SetY(545)
 		h.pdf.Cell(nil, "無")
 	}
 
-	// Point
-	h.pdf.SetX(300)
-	h.pdf.SetY(startY + 60)
+	h.pdf.SetX(offsetX + 310)
+	h.pdf.SetY(545)
 	h.pdf.Cell(nil, "ポイント")
+	if details.Points != "" {
+		h.pdf.SetX(offsetX + 355)
+		h.pdf.SetY(545)
+		h.pdf.Cell(nil, details.Points)
+	}
 
 	return nil
 }
 
-// DrawSeparator draws a separator line between sheets
-func (h *PDFInstructionHelper) DrawSeparator() error {
-	// Draw dotted line in the middle
+// DrawCenterDivider draws a dashed line in the center to separate the two sections
+func (h *PDFInstructionHelper) DrawCenterDivider() error {
 	h.pdf.SetLineWidth(0.5)
-	// Since SetLineDashPattern is not available in gopdf, we'll draw multiple short lines
-	for y := 30.0; y < 570.0; y += 6 {
-		h.pdf.Line(297.5, y, 297.5, y+3)
+	h.pdf.SetStrokeColor(128, 128, 128)
+
+	// Draw dashed line by drawing multiple small lines
+	for y := 30.0; y < 565.0; y += 8 {
+		h.pdf.Line(420.945, y, 420.945, y+4)
 	}
+
+	h.pdf.SetStrokeColor(0, 0, 0) // Reset to black
 	return nil
 }

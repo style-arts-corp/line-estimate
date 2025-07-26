@@ -33,64 +33,8 @@ func GenerateInstructionPDF(instruction *models.PDFInstruction) (*gopdf.GoPdf, e
 	// Create helper
 	helper := utils.NewPDFInstructionHelper(pdf)
 
-	// Draw separator line
-	if err := helper.DrawSeparator(); err != nil {
-		return nil, err
-	}
-
-	// Left side - 作業指示書 (Work Instruction Sheet)
-	// Draw header
-	if err := helper.DrawInstructionHeader(instruction, false); err != nil {
-		return nil, err
-	}
-
-	// Draw contact info
-	if err := helper.DrawContactInfo(instruction, false); err != nil {
-		return nil, err
-	}
-
-	// Draw work items
-	if err := helper.DrawWorkItems(instruction.Items); err != nil {
-		return nil, err
-	}
-
-	// Draw work details
-	if err := helper.DrawWorkDetails(instruction.WorkDetails); err != nil {
-		return nil, err
-	}
-
-	// Right side - 控 (Receipt)
-	// Offset all X coordinates by 420 for right side
-	pdf.SetX(420 + 50)
-	pdf.SetY(40)
-	if err := pdf.SetFont("noto-sans", "", 16); err != nil {
-		return nil, err
-	}
-	pdf.Cell(nil, "控")
-
-	// Receipt date label
-	pdf.SetX(420 + 180)
-	pdf.SetY(40)
-	if err := pdf.SetFont("noto-sans", "", 10); err != nil {
-		return nil, err
-	}
-	pdf.Cell(nil, "受付日")
-
-	// Issue date
-	pdf.SetX(420 + 180)
-	pdf.SetY(60)
-	pdf.Cell(nil, instruction.IssueDate.Format("2006年1月2日"))
-
-	// Draw receipt contact info (similar structure, offset X by 420)
-	startY := float64(100)
-	pdf.SetLineWidth(0.5)
-	pdf.Rectangle(420+50, startY, 200, 120, "D", 0, 0)
-
-	// Continue with receipt side details...
-	// (Implementation would continue with all receipt side elements)
-
-	// Draw memo section on the right side
-	if err := helper.DrawMemoSection(instruction.Memo); err != nil {
+	// Draw both sides (instruction sheet and receipt)
+	if err := helper.DrawBothSides(instruction); err != nil {
 		return nil, err
 	}
 
@@ -182,19 +126,22 @@ func CreateInstructionPDF(c *gin.Context) {
 func CreateTestInstructionPDF(c *gin.Context) {
 	// Create test instruction data
 	testInstruction := &models.PDFInstruction{
-		InstructionNo: "INS-20250425-001",
-		IssueDate:     time.Now(),
+		InstructionNo:   "INS-20250425-001",
+		IssueDate:       time.Now(),
+		CollectionDate:  "令和7年4月30日（水）",
+		AcceptanceCheck: true,
+		AcceptedBy:      "田中",
 		Contractor: models.PDFContractorInfo{
 			Recipient: "受付済",
-			Name:      "株式会社サンプル",
-			Address:   "東京都新宿区○○1-2-3",
+			Name:      "株式会社サンプル工業",
+			Address:   "東京都新宿区西新宿1-2-3 サンプルビル5F",
 			Person:    "山田太郎",
 			Tel:       "03-1234-5678",
 		},
 		Collector: models.PDFCollectorInfo{
 			Recipient: "受付済",
-			Name:      "株式会社サンプル",
-			Address:   "東京都新宿区○○1-2-3",
+			Name:      "株式会社サンプル工業",
+			Address:   "東京都新宿区西新宿1-2-3 サンプルビル5F",
 			Person:    "山田太郎",
 			Tel:       "03-1234-5678",
 		},
@@ -202,16 +149,22 @@ func CreateTestInstructionPDF(c *gin.Context) {
 			{Description: "オフィスチェア 10脚"},
 			{Description: "会議用テーブル 3台"},
 			{Description: "キャビネット 5台"},
+			{Description: "パソコンデスク 8台"},
+			{Description: "書類保管庫 2台"},
+			{Description: "プリンター 3台"},
 			{Description: "その他事務用品一式"},
 		},
 		Memo: "14時頃到着予定。駐車場は建物裏側を利用してください。",
 		WorkDetails: models.PDFWorkDetails{
-			Contractor:     "A-123",
-			Amount:         "2.5t",
-			Manifest:       "B-456",
-			ManifestType:   "産廃",
-			NoRecyclingFee: true,
-			ExtraPoints:    false,
+			WorkSlip:          "WS-2025-0430",
+			CollectionAmount:  "55,000円",
+			Weight:            "2.5t",
+			Manifest:          "MF-123456",
+			TPoint:            "550pt",
+			TaxExcludedRate:   "20円/kg",
+			RecyclingTicket:   "",
+			RecyclingTicketNo: true,
+			Points:            "1,100",
 		},
 	}
 
