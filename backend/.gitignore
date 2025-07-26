@@ -4,3 +4,4 @@ service-account-key*.json
 disposal-estimate-*.json
 *.pem
 *.key
+pdfs/*

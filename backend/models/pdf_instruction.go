@@ -45,7 +45,7 @@ type PDFWorkDetails struct {
 	CollectionAmount  string `json:"collection_amount"`   // 集金額（税込）
 	Weight            string `json:"weight"`              // 計量
 	Manifest          string `json:"manifest"`            // マニフェスト
-	TPoint            string `json:"t_point"`             // Tポイント
+	VPoint            string `json:"v_point"`             // Vポイント
 	TaxExcludedRate   string `json:"tax_excluded_rate"`   // 税抜@
 	RecyclingTicket   string `json:"recycling_ticket"`    // リサイクル券
 	RecyclingTicketNo bool   `json:"recycling_ticket_no"` // リサイクル券 無

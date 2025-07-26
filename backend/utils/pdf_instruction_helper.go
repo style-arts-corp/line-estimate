@@ -92,24 +92,26 @@ func (h *PDFInstructionHelper) DrawHeader(offsetX float64, instruction *models.P
 
 	// Acceptance check box
 	h.pdf.SetLineWidth(1)
-	h.pdf.RectFromUpperLeftWithStyle(offsetX+180, 42, 50, 20, "D")
-	h.pdf.SetX(offsetX + 190)
-	h.pdf.SetY(52)
+	// h.pdf.RectFromUpperLeftWithStyle(offsetX+180, 42, 50, 20, "D")
+	h.pdf.SetX(offsetX + 150)
+	h.pdf.SetY(55)
 	if err := h.pdf.SetFont("noto-sans", "", 10); err != nil {
 		return err
 	}
 	h.pdf.Cell(nil, "受付")
 
 	// Accepted by box
-	h.pdf.RectFromUpperLeftWithStyle(offsetX+260, 42, 50, 20, "D")
-	h.pdf.SetX(offsetX + 270)
-	h.pdf.SetY(52)
+	// h.pdf.RectFromUpperLeftWithStyle(offsetX+260, 42, 50, 20, "D")
+	h.pdf.SetX(offsetX + 250)
+	h.pdf.SetY(55)
 	h.pdf.Cell(nil, "受付者")
 
 	// Accepted by value box
-	h.pdf.RectFromUpperLeftWithStyle(offsetX+310, 42, 70, 20, "D")
+	if err := h.pdf.SetFont("noto-sans", "", 14); err != nil {
+		return err
+	}
 	if instruction.AcceptedBy != "" {
-		h.pdf.SetX(offsetX + 320)
+		h.pdf.SetX(offsetX + 300)
 		h.pdf.SetY(52)
 		h.pdf.Cell(nil, instruction.AcceptedBy)
 	}
@@ -131,8 +133,8 @@ func (h *PDFInstructionHelper) DrawCollectionDate(offsetX float64, instruction *
 	h.pdf.Cell(nil, "収集日")
 
 	// Draw underline for date
-	h.pdf.SetLineWidth(0.5)
-	h.pdf.Line(offsetX+100, 92, offsetX+250, 92)
+	// h.pdf.SetLineWidth(0.5)
+	// h.pdf.Line(offsetX+100, 92, offsetX+250, 92)
 
 	if instruction.CollectionDate != "" {
 		h.pdf.SetX(offsetX + 110)
@@ -228,18 +230,18 @@ func (h *PDFInstructionHelper) DrawCollectorBox(offsetX float64, instruction *mo
 func (h *PDFInstructionHelper) DrawContentSection(offsetX float64, items []models.PDFWorkItem) error {
 	// Content header box
 	h.pdf.SetLineWidth(1)
-	h.pdf.RectFromUpperLeftWithStyle(offsetX+30, 190, 360, 25, "D")
+	// h.pdf.RectFromUpperLeftWithStyle(offsetX+30, 190, 360, 25, "D")
 
-	h.pdf.SetX(offsetX + 170)
-	h.pdf.SetY(200)
+	h.pdf.SetX(offsetX + 35)
+	h.pdf.SetY(190)
 	if err := h.pdf.SetFont("noto-sans", "", 11); err != nil {
 		return err
 	}
 	h.pdf.Cell(nil, "- 内容 -")
 
 	// Content items box
-	h.pdf.SetLineWidth(1)
-	h.pdf.RectFromUpperLeftWithStyle(offsetX+30, 215, 360, 250, "D")
+	// h.pdf.SetLineWidth(1)
+	// h.pdf.RectFromUpperLeftWithStyle(offsetX+30, 215, 360, 250, "D")
 
 	// Draw items
 	if err := h.pdf.SetFont("noto-sans", "", 10); err != nil {
@@ -281,12 +283,12 @@ func (h *PDFInstructionHelper) DrawFooter(offsetX float64, details models.PDFWor
 
 	h.pdf.SetX(offsetX + 210)
 	h.pdf.SetY(480)
-	h.pdf.Cell(nil, "集金額")
-	h.pdf.Line(offsetX+250, 490, offsetX+320, 490)
+	h.pdf.Cell(nil, "集金額（税込）")
+	h.pdf.Line(offsetX+290, 490, offsetX+330, 490)
 	if details.CollectionAmount != "" {
-		h.pdf.SetX(offsetX + 255)
+		h.pdf.SetX(offsetX + 290)
 		h.pdf.SetY(480)
-		h.pdf.Cell(nil, fmt.Sprintf("（税込）%s", details.CollectionAmount))
+		h.pdf.Cell(nil, fmt.Sprintf("%s", details.CollectionAmount))
 	}
 
 	// Row 2: Weight
@@ -311,21 +313,12 @@ func (h *PDFInstructionHelper) DrawFooter(offsetX float64, details models.PDFWor
 		h.pdf.Cell(nil, details.Manifest)
 	}
 
-	h.pdf.SetX(offsetX + 210)
-	h.pdf.SetY(530)
-	h.pdf.Cell(nil, "Tポイント")
-	if details.TPoint != "" {
-		h.pdf.SetX(offsetX + 260)
-		h.pdf.SetY(530)
-		h.pdf.Cell(nil, details.TPoint)
-	}
-
-	h.pdf.SetX(offsetX + 310)
-	h.pdf.SetY(530)
+	h.pdf.SetX(offsetX + 250)
+	h.pdf.SetY(505)
 	h.pdf.Cell(nil, "税抜@")
 	if details.TaxExcludedRate != "" {
-		h.pdf.SetX(offsetX + 345)
-		h.pdf.SetY(530)
+		h.pdf.SetX(offsetX + 290)
+		h.pdf.SetY(505)
 		h.pdf.Cell(nil, details.TaxExcludedRate)
 	}
 
@@ -340,20 +333,28 @@ func (h *PDFInstructionHelper) DrawFooter(offsetX float64, details models.PDFWor
 		h.pdf.Cell(nil, details.RecyclingTicket)
 	}
 
+	h.pdf.SetX(offsetX + 210)
+	h.pdf.SetY(530)
+	h.pdf.Cell(nil, "Vポイント")
 	if details.RecyclingTicketNo {
 		h.pdf.SetX(offsetX + 210)
 		h.pdf.SetY(545)
 		h.pdf.Cell(nil, "無")
 	}
 
-	h.pdf.SetX(offsetX + 310)
-	h.pdf.SetY(545)
-	h.pdf.Cell(nil, "ポイント")
+	if details.VPoint != "" {
+		h.pdf.SetX(offsetX + 260)
+		h.pdf.SetY(530)
+		h.pdf.Cell(nil, details.VPoint)
+	}
 	if details.Points != "" {
-		h.pdf.SetX(offsetX + 355)
+		h.pdf.SetX(offsetX + 300)
 		h.pdf.SetY(545)
 		h.pdf.Cell(nil, details.Points)
 	}
+	h.pdf.SetX(offsetX + 350)
+	h.pdf.SetY(545)
+	h.pdf.Cell(nil, "ポイント")
 
 	return nil
 }

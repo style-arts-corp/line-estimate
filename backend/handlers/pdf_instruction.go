@@ -160,7 +160,7 @@ func CreateTestInstructionPDF(c *gin.Context) {
 			CollectionAmount:  "55,000円",
 			Weight:            "2.5t",
 			Manifest:          "MF-123456",
-			TPoint:            "550pt",
+			VPoint:            "550pt",
 			TaxExcludedRate:   "20円/kg",
 			RecyclingTicket:   "",
 			RecyclingTicketNo: true,
